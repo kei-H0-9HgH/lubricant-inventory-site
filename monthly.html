@@ -1,0 +1,977 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="潤滑油在庫">
+  <meta name="theme-color" content="#f6f7f2">
+  <link rel="apple-touch-icon" href="icon.png">
+  <title>潤滑油 月次集計</title>
+  <style>
+    :root {
+      --bg: #f6f7f2;
+      --panel: #ffffff;
+      --line: #d8ddd2;
+      --line-strong: #b9c1b4;
+      --text: #1f2520;
+      --muted: #647064;
+      --primary: #256d53;
+      --primary-dark: #1b513e;
+      --accent: #bf6b21;
+      --danger: #c7372f;
+      --danger-bg: #fff0ee;
+      --ok-bg: #eef8f1;
+      --shadow: 0 1px 2px rgba(31, 37, 32, 0.08);
+      --radius: 6px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+    }
+
+    button {
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      min-height: 36px;
+      padding: 0 12px;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    button:hover {
+      background: #f1f4ee;
+    }
+
+    button:focus-visible,
+    a:focus-visible {
+      outline: 3px solid rgba(37, 109, 83, 0.22);
+      outline-offset: 1px;
+    }
+
+    .app {
+      min-height: 100vh;
+      padding: 18px;
+    }
+
+    .header {
+      align-items: flex-start;
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      margin: 0 auto 14px;
+      max-width: 1380px;
+    }
+
+    .title-block {
+      min-width: 0;
+    }
+
+    h1 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      line-height: 1.3;
+      margin: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 4px 0 0;
+    }
+
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .nav-button {
+      align-items: center;
+      background: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: var(--radius);
+      color: #fff;
+      display: inline-flex;
+      font-weight: 700;
+      min-height: 36px;
+      padding: 0 12px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .nav-button:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(130px, 1fr));
+      gap: 10px;
+      margin: 0 auto 14px;
+      max-width: 1380px;
+    }
+
+    .summary {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      min-width: 0;
+      padding: 12px;
+    }
+
+    .summary .label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-bottom: 5px;
+    }
+
+    .summary .value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .summary.total {
+      border-left: 5px solid var(--primary);
+    }
+
+    .summary.warning {
+      background: var(--danger-bg);
+      border-left: 5px solid var(--danger);
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin: 0 auto 14px;
+      max-width: 1380px;
+      min-width: 0;
+    }
+
+    .panel-head {
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      padding: 12px;
+    }
+
+    .panel-head h2 {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .panel-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn-accent {
+      background: #fff4e8;
+      border-color: #d99a60;
+      color: #7b3f0f;
+      font-weight: 700;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      border-collapse: collapse;
+      min-width: 1040px;
+      width: 100%;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f3f5ef;
+      color: #3d473d;
+      font-size: 0.8rem;
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    td {
+      background: #fff;
+    }
+
+    tbody tr.low td {
+      background: var(--danger-bg);
+    }
+
+    tbody tr.movement-in td {
+      background: #eef8f1;
+    }
+
+    tbody tr.movement-out td {
+      background: #fff7e8;
+    }
+
+    tbody tr.movement-both td {
+      background: #f7f4ff;
+    }
+
+    .name-cell {
+      min-width: 190px;
+    }
+
+    .product-name {
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.82rem;
+      overflow-wrap: anywhere;
+    }
+
+    .money,
+    .number {
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .badge {
+      border-radius: 999px;
+      display: inline-flex;
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1;
+      padding: 5px 8px;
+      white-space: nowrap;
+    }
+
+    .badge-low {
+      background: #f6c4bf;
+      color: #7f1f18;
+    }
+
+    .badge-ok {
+      background: #d9efde;
+      color: #235632;
+    }
+
+    .badge-in {
+      background: #d9efde;
+      color: #235632;
+    }
+
+    .badge-out {
+      background: #ffe0b8;
+      color: #7b3f0f;
+    }
+
+    .badge-both {
+      background: #e5ddff;
+      color: #3d2f7a;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 28px 12px;
+      text-align: center;
+    }
+
+    .toast {
+      background: #263129;
+      border-radius: var(--radius);
+      bottom: 16px;
+      color: #fff;
+      left: 50%;
+      opacity: 0;
+      padding: 10px 14px;
+      pointer-events: none;
+      position: fixed;
+      text-align: center;
+      transform: translate(-50%, 10px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      z-index: 10;
+      max-width: min(92vw, 520px);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 1120px) {
+      .summary-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .app {
+        padding: 12px;
+      }
+
+      .header {
+        display: block;
+      }
+
+      .header-actions {
+        justify-content: stretch;
+        margin-top: 10px;
+      }
+
+      .nav-button,
+      .panel-actions button {
+        justify-content: center;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .summary {
+        padding: 10px;
+      }
+
+      .summary .value {
+        font-size: 1.05rem;
+      }
+
+      .panel-head {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .panel-actions {
+        justify-content: stretch;
+      }
+
+      .table-wrap {
+        overflow: visible;
+      }
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+        min-width: 0;
+        width: 100%;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tbody {
+        display: grid;
+        gap: 10px;
+        padding: 10px;
+      }
+
+      tr {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      tbody tr.low {
+        border-color: #e3aaa5;
+      }
+
+      td {
+        align-items: start;
+        border-bottom: 1px solid #eef1eb;
+        display: grid;
+        grid-template-columns: 104px minmax(0, 1fr);
+        gap: 8px;
+        padding: 9px 10px;
+      }
+
+      td::before {
+        color: var(--muted);
+        content: attr(data-label);
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding-top: 2px;
+      }
+
+      td.name-cell {
+        display: block;
+      }
+
+      td.name-cell::before {
+        content: none;
+      }
+
+      td:last-child {
+        border-bottom: 0;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 10mm;
+      }
+
+      * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+      }
+
+      html,
+      body {
+        background: #fff;
+        color: #000;
+        font-size: 10px;
+      }
+
+      .app {
+        padding: 0;
+      }
+
+      .header,
+      .summary-grid,
+      .panel {
+        max-width: none;
+        width: 100%;
+      }
+
+      .header {
+        border-bottom: 1px solid #999;
+        margin-bottom: 6mm;
+        padding-bottom: 3mm;
+      }
+
+      .header-actions,
+      .panel-actions,
+      .toast {
+        display: none !important;
+      }
+
+      h1 {
+        font-size: 16px;
+      }
+
+      .subtitle {
+        color: #333;
+        font-size: 10px;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 3mm;
+        margin-bottom: 5mm;
+      }
+
+      .summary {
+        border: 1px solid #999;
+        border-left: 1px solid #999 !important;
+        border-radius: 0;
+        padding: 2.5mm;
+      }
+
+      .summary.warning {
+        background: #fff;
+      }
+
+      .summary .label {
+        color: #333;
+        font-size: 9px;
+      }
+
+      .summary .value {
+        font-size: 13px;
+      }
+
+      .panel {
+        border: 0;
+        border-radius: 0;
+      }
+
+      .panel-head {
+        border-bottom: 1px solid #999;
+        padding: 0 0 2mm;
+        margin-bottom: 2mm;
+      }
+
+      .panel-head h2 {
+        font-size: 12px;
+      }
+
+      .table-wrap {
+        overflow: visible;
+      }
+
+      table {
+        min-width: 0;
+        table-layout: fixed;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border: 1px solid #999;
+        padding: 2mm 1.2mm;
+        word-break: break-word;
+      }
+
+      th {
+        background: #eee !important;
+        color: #000;
+        font-size: 8.5px;
+        position: static;
+      }
+
+      td {
+        background: #fff !important;
+        font-size: 8.5px;
+      }
+
+      tbody tr.low td {
+        background: #fff3f2 !important;
+      }
+
+      .badge {
+        border: 1px solid #999;
+        border-radius: 0;
+        color: #000;
+        font-size: 8px;
+        padding: 1mm;
+      }
+
+      .badge-low,
+      .badge-ok {
+        background: #fff;
+      }
+
+      .empty {
+        border: 1px solid #999;
+        color: #000;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="title-block">
+        <h1>潤滑油 月次集計</h1>
+        <p class="subtitle">在庫管理データから当月の数量・金額を集計</p>
+      </div>
+      <div class="header-actions">
+        <a class="nav-button" href="products.html">商品マスタ</a>
+        <a class="nav-button" href="index.html">在庫管理に戻る</a>
+      </div>
+    </header>
+
+    <section class="summary-grid" aria-label="月次集計">
+      <div class="summary">
+        <div class="label">商品数</div>
+        <div class="value" id="itemCount">0 件</div>
+      </div>
+      <div class="summary">
+        <div class="label">現在庫 合計</div>
+        <div class="value" id="totalStock">0</div>
+      </div>
+      <div class="summary total">
+        <div class="label">在庫総額</div>
+        <div class="value" id="totalValue">¥0</div>
+      </div>
+      <div class="summary">
+        <div class="label">当月入荷 合計</div>
+        <div class="value" id="totalIn">0</div>
+      </div>
+      <div class="summary">
+        <div class="label">当月出荷 合計</div>
+        <div class="value" id="totalOut">0</div>
+      </div>
+      <div class="summary warning">
+        <div class="label">最低在庫以下</div>
+        <div class="value" id="lowCount">0 件</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="今月の入出庫一覧">
+      <div class="panel-head">
+        <h2>今月の入出庫一覧</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>商品名</th>
+              <th>粘度/規格</th>
+              <th>仕入先</th>
+              <th>単位</th>
+              <th>入荷数</th>
+              <th>入荷日</th>
+              <th>出荷数</th>
+              <th>出荷日</th>
+              <th>現在庫</th>
+              <th>状態</th>
+            </tr>
+          </thead>
+          <tbody id="movementBody"></tbody>
+        </table>
+        <div id="movementEmptyState" class="empty" hidden>今月の入荷・出荷が入力されている商品はありません。</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="商品別集計">
+      <div class="panel-head">
+        <h2>商品別 集計表</h2>
+        <div class="panel-actions">
+          <button type="button" id="printButton" class="btn-primary">印刷</button>
+          <button type="button" id="exportButton" class="btn-accent">バックアップCSV出力</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>商品名</th>
+              <th>粘度/規格</th>
+              <th>仕入先</th>
+              <th>単位</th>
+              <th>現在庫</th>
+              <th>単価</th>
+              <th>小計</th>
+              <th>当月入荷</th>
+              <th>入荷日</th>
+              <th>当月出荷</th>
+              <th>出荷日</th>
+              <th>最終更新日</th>
+              <th>状態</th>
+            </tr>
+          </thead>
+          <tbody id="itemsBody"></tbody>
+        </table>
+        <div id="emptyState" class="empty" hidden>登録データがありません。在庫管理画面で商品を登録してください。</div>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = "lubricantInventoryItems.v1";
+    const UNITS = ["ペール", "ドラム", "箱", "バラ"];
+    const HEADERS = ["ID", "商品コード", "商品名", "粘度/規格", "仕入先", "現在庫", "最低在庫", "単位", "単価", "当月入荷", "入荷日", "当月出荷", "出荷日", "最終更新日", "メモ", "販売王残高金額"];
+
+    const els = {
+      itemCount: document.getElementById("itemCount"),
+      totalStock: document.getElementById("totalStock"),
+      totalValue: document.getElementById("totalValue"),
+      totalIn: document.getElementById("totalIn"),
+      totalOut: document.getElementById("totalOut"),
+      lowCount: document.getElementById("lowCount"),
+      movementBody: document.getElementById("movementBody"),
+      movementEmptyState: document.getElementById("movementEmptyState"),
+      itemsBody: document.getElementById("itemsBody"),
+      emptyState: document.getElementById("emptyState"),
+      printButton: document.getElementById("printButton"),
+      exportButton: document.getElementById("exportButton"),
+      toast: document.getElementById("toast")
+    };
+
+    function today() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function compactDate() {
+      return today().replace(/-/g, "");
+    }
+
+    function uid() {
+      return "item-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+    }
+
+    function numberValue(value) {
+      const num = Number(String(value ?? "").replace(/[,\s￥¥円]/g, ""));
+      return Number.isFinite(num) ? num : 0;
+    }
+
+    function integerValue(value) {
+      return Math.max(0, Math.trunc(numberValue(value)));
+    }
+
+    function formatQuantity(value) {
+      return integerValue(value).toLocaleString("ja-JP", { maximumFractionDigits: 0 });
+    }
+
+    function formatMoney(value) {
+      return numberValue(value).toLocaleString("ja-JP", {
+        style: "currency",
+        currency: "JPY",
+        maximumFractionDigits: 0
+      });
+    }
+
+    function normalizeUnit(value) {
+      const unit = String(value || "").trim();
+      if (UNITS.includes(unit)) return unit;
+      if (unit.includes("缶")) return "ペール";
+      if (unit.includes("本")) return "ドラム";
+      if (unit.includes("ケース")) return "箱";
+      if (unit.includes("箱")) return "箱";
+      return "バラ";
+    }
+
+    function normalizeItem(raw) {
+      return {
+        id: raw.id || uid(),
+        productCode: String(raw.productCode || "").trim(),
+        name: String(raw.name || "").trim(),
+        spec: String(raw.spec || "").trim(),
+        supplier: String(raw.supplier || "").trim(),
+        stock: integerValue(raw.stock),
+        minStock: integerValue(raw.minStock),
+        unit: normalizeUnit(raw.unit),
+        price: integerValue(raw.price),
+        monthlyIn: integerValue(raw.monthlyIn),
+        monthlyInDate: raw.monthlyInDate || "",
+        monthlyOut: integerValue(raw.monthlyOut),
+        monthlyOutDate: raw.monthlyOutDate || "",
+        updatedAt: raw.updatedAt || "",
+        memo: String(raw.memo || "").trim(),
+        referenceSubtotal: integerValue(raw.referenceSubtotal)
+      };
+    }
+
+    function loadItems() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        return Array.isArray(saved) ? saved.map(normalizeItem) : [];
+      } catch (error) {
+        console.warn("Failed to load inventory data:", error);
+        return [];
+      }
+    }
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => els.toast.classList.remove("show"), 2200);
+    }
+
+    function csvEscape(value) {
+      const text = String(value ?? "");
+      return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    }
+
+    function exportCsv(items) {
+      const lines = [HEADERS.map(csvEscape).join(",")];
+      for (const item of items) {
+        lines.push([
+          item.id,
+          item.productCode,
+          item.name,
+          item.spec,
+          item.supplier,
+          item.stock,
+          item.minStock,
+          item.unit,
+          item.price,
+          item.monthlyIn,
+          item.monthlyInDate,
+          item.monthlyOut,
+          item.monthlyOutDate,
+          item.updatedAt,
+          item.memo,
+          item.referenceSubtotal || ""
+        ].map(csvEscape).join(","));
+      }
+
+      const blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "inventory_backup_" + compactDate() + ".csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast("バックアップCSVを出力しました");
+    }
+
+    function updateSummary(items) {
+      const totalStock = items.reduce((sum, item) => sum + item.stock, 0);
+      const totalValue = items.reduce((sum, item) => sum + item.stock * item.price, 0);
+      const totalIn = items.reduce((sum, item) => sum + item.monthlyIn, 0);
+      const totalOut = items.reduce((sum, item) => sum + item.monthlyOut, 0);
+      const lowCount = items.filter(item => item.stock <= item.minStock).length;
+
+      els.itemCount.textContent = items.length + " 件";
+      els.totalStock.textContent = formatQuantity(totalStock);
+      els.totalValue.textContent = formatMoney(totalValue);
+      els.totalIn.textContent = formatQuantity(totalIn);
+      els.totalOut.textContent = formatQuantity(totalOut);
+      els.lowCount.textContent = lowCount + " 件";
+    }
+
+    function movementStatus(item) {
+      const hasIn = item.monthlyIn > 0;
+      const hasOut = item.monthlyOut > 0;
+      if (hasIn && hasOut) return { rowClass: "movement-both", badgeClass: "badge-both", label: "入出荷" };
+      if (hasIn) return { rowClass: "movement-in", badgeClass: "badge-in", label: "入荷" };
+      return { rowClass: "movement-out", badgeClass: "badge-out", label: "出荷" };
+    }
+
+    function renderMovements(items) {
+      const movements = items.filter(item => item.monthlyIn > 0 || item.monthlyOut > 0);
+      els.movementBody.innerHTML = "";
+      els.movementEmptyState.hidden = movements.length !== 0;
+
+      for (const item of movements) {
+        const status = movementStatus(item);
+        const tr = document.createElement("tr");
+        tr.classList.add(status.rowClass);
+        tr.innerHTML = `
+          <td data-label="商品名" class="name-cell"><div class="product-name"></div></td>
+          <td data-label="粘度/規格" class="spec"></td>
+          <td data-label="仕入先" class="supplier"></td>
+          <td data-label="単位"></td>
+          <td data-label="入荷数" class="number"></td>
+          <td data-label="入荷日"></td>
+          <td data-label="出荷数" class="number"></td>
+          <td data-label="出荷日"></td>
+          <td data-label="現在庫" class="number"></td>
+          <td data-label="状態"><span class="badge"></span></td>
+        `;
+
+        tr.querySelector(".product-name").textContent = item.name || "名称未入力";
+        tr.querySelector(".spec").textContent = item.spec || "-";
+        tr.querySelector(".supplier").textContent = item.supplier || "-";
+        tr.children[3].textContent = item.unit;
+        tr.children[4].textContent = item.monthlyIn > 0 ? formatQuantity(item.monthlyIn) : "";
+        tr.children[5].textContent = item.monthlyInDate || "";
+        tr.children[6].textContent = item.monthlyOut > 0 ? formatQuantity(item.monthlyOut) : "";
+        tr.children[7].textContent = item.monthlyOutDate || "";
+        tr.children[8].textContent = formatQuantity(item.stock);
+        const badge = tr.querySelector(".badge");
+        badge.classList.add(status.badgeClass);
+        badge.textContent = status.label;
+        els.movementBody.appendChild(tr);
+      }
+    }
+
+    function render() {
+      const items = loadItems();
+      els.itemsBody.innerHTML = "";
+      els.emptyState.hidden = items.length !== 0;
+      renderMovements(items);
+
+      for (const item of items) {
+        const tr = document.createElement("tr");
+        const isLow = item.stock <= item.minStock;
+        if (isLow) tr.classList.add("low");
+
+        tr.innerHTML = `
+          <td data-label="商品名" class="name-cell">
+            <div class="product-name"></div>
+          </td>
+          <td data-label="粘度/規格" class="spec"></td>
+          <td data-label="仕入先" class="supplier"></td>
+          <td data-label="単位"></td>
+          <td data-label="現在庫" class="number"></td>
+          <td data-label="単価" class="money"></td>
+          <td data-label="小計" class="money"><strong></strong></td>
+          <td data-label="当月入荷" class="number"></td>
+          <td data-label="入荷日"></td>
+          <td data-label="当月出荷" class="number"></td>
+          <td data-label="出荷日"></td>
+          <td data-label="最終更新日"></td>
+          <td data-label="状態"></td>
+        `;
+
+        tr.querySelector(".product-name").textContent = item.name || "名称未入力";
+        tr.querySelector(".spec").textContent = item.spec || "-";
+        tr.querySelector(".supplier").textContent = item.supplier || "-";
+        tr.children[3].textContent = item.unit;
+        tr.children[4].textContent = formatQuantity(item.stock);
+        tr.children[5].textContent = formatMoney(item.price);
+        tr.children[6].querySelector("strong").textContent = formatMoney(item.stock * item.price);
+        tr.children[7].textContent = formatQuantity(item.monthlyIn);
+        tr.children[8].textContent = item.monthlyInDate || "";
+        tr.children[9].textContent = formatQuantity(item.monthlyOut);
+        tr.children[10].textContent = item.monthlyOutDate || "";
+        tr.children[11].textContent = item.updatedAt || "";
+        tr.children[12].innerHTML = isLow ? '<span class="badge badge-low">要補充</span>' : '<span class="badge badge-ok">適正</span>';
+        els.itemsBody.appendChild(tr);
+      }
+
+      updateSummary(items);
+      els.exportButton.onclick = () => exportCsv(items);
+    }
+
+    els.printButton.addEventListener("click", () => {
+      window.print();
+    });
+
+    render();
+  </script>
+</body>
+</html>

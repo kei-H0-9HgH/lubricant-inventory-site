@@ -1,0 +1,1756 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="潤滑油在庫">
+  <meta name="theme-color" content="#f6f7f2">
+  <link rel="apple-touch-icon" href="icon.png">
+  <title>潤滑油 在庫管理</title>
+  <style>
+    :root {
+      --bg: #f6f7f2;
+      --panel: #ffffff;
+      --line: #d8ddd2;
+      --line-strong: #b9c1b4;
+      --text: #1f2520;
+      --muted: #647064;
+      --primary: #256d53;
+      --primary-dark: #1b513e;
+      --accent: #bf6b21;
+      --danger: #c7372f;
+      --danger-bg: #fff0ee;
+      --warn-bg: #fff7e8;
+      --ok-bg: #eef8f1;
+      --shadow: 0 1px 2px rgba(31, 37, 32, 0.08);
+      --radius: 6px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      min-height: 36px;
+      padding: 0 12px;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    button:hover {
+      background: #f1f4ee;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid rgba(37, 109, 83, 0.22);
+      outline-offset: 1px;
+    }
+
+    .app {
+      min-height: 100vh;
+      padding: 18px;
+    }
+
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 0 auto 14px;
+      max-width: 1380px;
+    }
+
+    .title-block {
+      min-width: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .nav-button {
+      align-items: center;
+      background: var(--primary);
+      border: 1px solid var(--primary);
+      border-radius: var(--radius);
+      color: #fff;
+      display: inline-flex;
+      font-weight: 700;
+      min-height: 36px;
+      padding: 0 12px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .nav-button:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+
+    .backup-button {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      min-height: 40px;
+      padding: 0 16px;
+    }
+
+    .backup-button:hover {
+      background: #9d5519;
+      border-color: #9d5519;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.45rem;
+      line-height: 1.3;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 10px;
+      margin: 0 auto 14px;
+      max-width: 1380px;
+    }
+
+    .summary {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+      min-width: 0;
+    }
+
+    .summary .label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-bottom: 5px;
+    }
+
+    .summary .value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .summary.total {
+      border-left: 5px solid var(--primary);
+    }
+
+    .summary.warning {
+      border-left: 5px solid var(--danger);
+      background: var(--danger-bg);
+    }
+
+    .print-controls {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 10px;
+      grid-template-columns: minmax(150px, 190px) minmax(160px, 240px) auto;
+      margin: 0 auto 14px;
+      max-width: 1380px;
+      padding: 12px;
+    }
+
+    .print-controls .field {
+      min-width: 0;
+    }
+
+    .print-controls button {
+      align-self: end;
+      min-height: 38px;
+      white-space: nowrap;
+    }
+
+    .print-report {
+      display: none;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
+      gap: 14px;
+      max-width: 1380px;
+      margin: 0 auto;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .panel-head {
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
+      padding: 12px;
+    }
+
+    .panel-head h2 {
+      font-size: 1rem;
+      margin: 0;
+    }
+
+    .form-body {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    input,
+    select,
+    textarea {
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      color: var(--text);
+      min-height: 38px;
+      padding: 8px 10px;
+      width: 100%;
+    }
+
+    input[hidden] {
+      display: none;
+    }
+
+    input[type="number"] {
+      text-align: center;
+    }
+
+    textarea {
+      min-height: 74px;
+      resize: vertical;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 2px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+    }
+
+    .btn-accent {
+      background: #fff4e8;
+      border-color: #d99a60;
+      color: #7b3f0f;
+      font-weight: 700;
+    }
+
+    .btn-danger {
+      background: #fff;
+      border-color: #d8918c;
+      color: var(--danger);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto;
+      gap: 10px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .toolbar-actions select {
+      min-height: 36px;
+      width: auto;
+    }
+
+    .file-button {
+      align-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      cursor: pointer;
+      display: inline-flex;
+      min-height: 36px;
+      padding: 0 12px;
+      white-space: nowrap;
+    }
+
+    .file-button:hover {
+      background: #f1f4ee;
+    }
+
+    .file-button input {
+      display: none;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      border-collapse: collapse;
+      min-width: 1120px;
+      width: 100%;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f3f5ef;
+      color: #3d473d;
+      font-size: 0.8rem;
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    td {
+      background: #fff;
+    }
+
+    tbody tr.low td {
+      background: var(--danger-bg);
+    }
+
+    .name-cell {
+      min-width: 190px;
+    }
+
+    .product-name {
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.82rem;
+      overflow-wrap: anywhere;
+    }
+
+    .money,
+    .number {
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .stock-control {
+      align-items: center;
+      display: grid;
+      grid-template-columns: 44px minmax(76px, 96px) 44px;
+      gap: 7px;
+    }
+
+    .stock-control button {
+      min-height: 42px;
+      padding: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .stock-control input {
+      min-height: 42px;
+      padding: 6px 7px;
+      text-align: center;
+    }
+
+    .badge {
+      border-radius: 999px;
+      display: inline-flex;
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1;
+      padding: 5px 8px;
+      white-space: nowrap;
+    }
+
+    .badge-low {
+      background: #f6c4bf;
+      color: #7f1f18;
+    }
+
+    .badge-ok {
+      background: #d9efde;
+      color: #235632;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .row-actions button {
+      min-height: 32px;
+      padding: 0 9px;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 28px 12px;
+      text-align: center;
+    }
+
+    .toast {
+      background: #263129;
+      border-radius: var(--radius);
+      bottom: 16px;
+      color: #fff;
+      left: 50%;
+      opacity: 0;
+      padding: 10px 14px;
+      pointer-events: none;
+      position: fixed;
+      transform: translate(-50%, 10px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      z-index: 10;
+      max-width: min(92vw, 520px);
+      text-align: center;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 980px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .app {
+        padding: 12px;
+      }
+
+      .header {
+        display: block;
+      }
+
+      .header-actions {
+        justify-content: stretch;
+        margin-top: 10px;
+      }
+
+      .nav-button {
+        justify-content: center;
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .summary {
+        padding: 10px;
+      }
+
+      .summary .value {
+        font-size: 1.05rem;
+      }
+
+      .field-row,
+      .toolbar,
+      .print-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar-actions {
+        justify-content: stretch;
+      }
+
+      .toolbar-actions button,
+      .toolbar-actions .file-button,
+      .toolbar-actions select {
+        flex: 1 1 130px;
+        justify-content: center;
+      }
+
+      .table-wrap {
+        overflow: visible;
+      }
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+        min-width: 0;
+        width: 100%;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tbody {
+        display: grid;
+        gap: 10px;
+        padding: 10px;
+      }
+
+      tr {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      tbody tr.low {
+        border-color: #e3aaa5;
+      }
+
+      td {
+        align-items: start;
+        border-bottom: 1px solid #eef1eb;
+        display: grid;
+        grid-template-columns: 104px minmax(0, 1fr);
+        gap: 8px;
+        padding: 9px 10px;
+      }
+
+      td::before {
+        color: var(--muted);
+        content: attr(data-label);
+        font-size: 0.78rem;
+        font-weight: 700;
+        padding-top: 2px;
+      }
+
+      td.name-cell {
+        display: block;
+      }
+
+      td.name-cell::before {
+        content: none;
+      }
+
+      td:last-child {
+        border-bottom: 0;
+      }
+
+      .stock-control {
+        grid-template-columns: 46px minmax(76px, 1fr) 46px;
+        max-width: 230px;
+      }
+
+      .row-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
+
+    @media print {
+      :root {
+        --text: #000;
+        --line: #999;
+      }
+
+      html,
+      body {
+        background: #fff;
+        color: #000;
+        font-size: 11px;
+      }
+
+      .app,
+      .toast {
+        display: none !important;
+      }
+
+      .print-report {
+        display: block;
+        font-family: "Yu Gothic", Meiryo, sans-serif;
+      }
+
+      .print-report h1 {
+        border-bottom: 2px solid #000;
+        font-size: 18px;
+        line-height: 1.25;
+        margin: 0 0 8px;
+        padding-bottom: 6px;
+        text-align: center;
+      }
+
+      .print-meta,
+      .print-summary,
+      .print-footer {
+        display: grid;
+        gap: 0;
+        grid-template-columns: repeat(3, 1fr);
+        margin-bottom: 8px;
+      }
+
+      .print-meta div,
+      .print-summary div,
+      .print-footer div {
+        border: 1px solid #777;
+        font-size: 11px;
+        min-height: 24px;
+        padding: 4px 6px;
+      }
+
+      .print-summary strong {
+        display: inline-block;
+        font-size: 12px;
+        margin-left: 4px;
+      }
+
+      .print-table {
+        border-collapse: collapse;
+        table-layout: fixed;
+        width: 100%;
+      }
+
+      .print-table th,
+      .print-table td {
+        border: 1px solid #777;
+        color: #000;
+        font-size: 10px;
+        line-height: 1.25;
+        padding: 3px 4px;
+        vertical-align: top;
+        word-break: break-word;
+      }
+
+      .print-table th {
+        background: #eee !important;
+        font-weight: 700;
+        position: static;
+        text-align: center;
+      }
+
+      .print-table td {
+        background: #fff !important;
+      }
+
+      .print-table .num,
+      .print-table .yen {
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .print-table .low-stock td {
+        font-weight: 700;
+      }
+
+      .print-table .low-stock td:first-child::before {
+        content: "要補充 ";
+      }
+
+      .print-table tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .print-footer {
+        margin: 10px 0 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <div class="title-block">
+        <h1>潤滑油 在庫管理</h1>
+        <p class="subtitle">localStorage保存・CSV入出力対応の軽量オフラインツール</p>
+      </div>
+      <div class="header-actions">
+        <a class="nav-button" href="products.html">商品マスタを見る</a>
+        <a class="nav-button" href="monthly.html">月次集計を見る</a>
+        <button type="button" class="nav-button backup-button" id="headerExportButton">バックアップCSV出力</button>
+      </div>
+    </header>
+
+    <section class="summary-grid" aria-label="集計">
+      <div class="summary total">
+        <div class="label">在庫総額</div>
+        <div class="value" id="totalValue">¥0</div>
+      </div>
+      <div class="summary">
+        <div class="label">当月入荷 合計</div>
+        <div class="value" id="totalIn">0</div>
+      </div>
+      <div class="summary">
+        <div class="label">当月出荷 合計</div>
+        <div class="value" id="totalOut">0</div>
+      </div>
+      <div class="summary warning">
+        <div class="label">最低在庫以下</div>
+        <div class="value" id="lowCount">0 件</div>
+      </div>
+    </section>
+
+    <section class="print-controls" aria-label="月末印刷">
+      <div class="field">
+        <label for="reportMonth">帳票月</label>
+        <input id="reportMonth" type="month">
+      </div>
+      <div class="field">
+        <label for="reportAdmin">管理者</label>
+        <input id="reportAdmin" placeholder="任意入力">
+      </div>
+      <button type="button" id="printReportButton" class="btn-primary">月末帳票を印刷</button>
+    </section>
+
+    <section class="workspace">
+      <section class="panel" aria-label="商品入力">
+        <div class="panel-head">
+          <h2 id="formTitle">商品登録</h2>
+          <button type="button" id="newButton">新規</button>
+        </div>
+        <form id="itemForm" class="form-body" autocomplete="off">
+          <input type="hidden" id="editingId">
+          <input type="hidden" id="productCode">
+          <div class="field">
+            <label for="name">商品名</label>
+            <input id="name" required placeholder="例：スーパーハイドロ 46">
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="spec">粘度/規格</label>
+              <input id="spec" placeholder="例：ISO VG46">
+            </div>
+            <div class="field">
+              <label for="supplierSelect">仕入先</label>
+              <select id="supplierSelect">
+                <option>上原成商事（株）</option>
+                <option>株式会社ホクト</option>
+                <option>中国精油株式会社</option>
+                <option>その他</option>
+              </select>
+              <input id="supplierOther" placeholder="仕入先を入力" hidden>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="stock">現在庫</label>
+              <input id="stock" type="number" step="1" min="0" inputmode="numeric" pattern="[0-9]*" value="0">
+            </div>
+            <div class="field">
+              <label for="minStock">最低在庫</label>
+              <input id="minStock" type="number" step="1" min="0" inputmode="numeric" pattern="[0-9]*" value="0">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="unit">単位</label>
+              <select id="unit">
+                <option>ペール</option>
+                <option>ドラム</option>
+                <option>箱</option>
+                <option>バラ</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="price">単価</label>
+              <input id="price" type="number" step="1" min="0" inputmode="numeric" pattern="[0-9]*" value="0">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="monthlyIn">当月入荷</label>
+              <input id="monthlyIn" type="number" step="1" min="0" inputmode="numeric" pattern="[0-9]*" value="0">
+            </div>
+            <div class="field">
+              <label for="monthlyOut">当月出荷</label>
+              <input id="monthlyOut" type="number" step="1" min="0" inputmode="numeric" pattern="[0-9]*" value="0">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="monthlyInDate">入荷日</label>
+              <input id="monthlyInDate" type="date">
+            </div>
+            <div class="field">
+              <label for="monthlyOutDate">出荷日</label>
+              <input id="monthlyOutDate" type="date">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="updatedAt">最終更新日</label>
+              <input id="updatedAt" type="date">
+            </div>
+            <div class="field">
+              <label for="memo">メモ</label>
+              <input id="memo" placeholder="保管場所、注意点など">
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn-primary" type="submit">保存</button>
+            <button type="button" id="clearFormButton">入力クリア</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel" aria-label="商品一覧">
+        <div class="toolbar">
+          <input id="search" type="search" placeholder="商品名・規格・仕入先で検索">
+          <div class="toolbar-actions">
+            <select id="importMode" aria-label="CSV読込モード">
+              <option value="append">追加</option>
+              <option value="replace">上書き</option>
+            </select>
+            <button type="button" id="exportButton" class="btn-accent">バックアップCSV出力</button>
+            <label class="file-button btn-accent">
+              販売王CSV読込
+              <input id="salesKingImportInput" type="file" accept=".csv,text/csv">
+            </label>
+            <label class="file-button">
+              CSV読込
+              <input id="importInput" type="file" accept=".csv,text/csv">
+            </label>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>商品</th>
+                <th>現在庫</th>
+                <th>最低</th>
+                <th>単位</th>
+                <th>単価</th>
+                <th>小計</th>
+                <th>当月入荷</th>
+                <th>入荷日</th>
+                <th>当月出荷</th>
+                <th>出荷日</th>
+                <th>最終更新日</th>
+                <th>状態</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="itemsBody"></tbody>
+          </table>
+          <div id="emptyState" class="empty" hidden>登録データがありません。</div>
+        </div>
+      </section>
+    </section>
+  </main>
+  <section class="print-report" aria-label="月末印刷用在庫帳票">
+    <h1 id="printTitle">YYYY年MM月 在庫一覧</h1>
+    <div class="print-meta">
+      <div>対象月：<strong id="printTargetMonth"></strong></div>
+      <div>商品数：<strong id="printItemCount">0</strong></div>
+      <div>出力日：<strong id="printOutputDate"></strong></div>
+    </div>
+    <div class="print-summary">
+      <div>在庫総額：<strong id="printTotalValue">¥0</strong></div>
+      <div>当月入荷：<strong id="printTotalIn">0</strong></div>
+      <div>当月出荷：<strong id="printTotalOut">0</strong></div>
+    </div>
+    <table class="print-table">
+      <colgroup>
+        <col style="width: 19%">
+        <col style="width: 12%">
+        <col style="width: 16%">
+        <col style="width: 6%">
+        <col style="width: 8%">
+        <col style="width: 10%">
+        <col style="width: 11%">
+        <col style="width: 9%">
+        <col style="width: 9%">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>商品名</th>
+          <th>規格</th>
+          <th>仕入先</th>
+          <th>単位</th>
+          <th>現在庫</th>
+          <th>単価</th>
+          <th>小計</th>
+          <th>当月入荷</th>
+          <th>当月出荷</th>
+        </tr>
+      </thead>
+      <tbody id="printRows"></tbody>
+    </table>
+    <div class="print-footer">
+      <div>出力日：<strong id="printFooterDate"></strong></div>
+      <div>管理者：<strong id="printAdminName"></strong></div>
+      <div>確認印：</div>
+    </div>
+  </section>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const STORAGE_KEY = "lubricantInventoryItems.v1";
+    const UNITS = ["ペール", "ドラム", "箱", "バラ"];
+    const SUPPLIERS = ["上原成商事（株）", "株式会社ホクト", "中国精油株式会社"];
+    const HEADERS = ["ID", "商品コード", "商品名", "粘度/規格", "仕入先", "現在庫", "最低在庫", "単位", "単価", "当月入荷", "入荷日", "当月出荷", "出荷日", "最終更新日", "メモ", "販売王残高金額"];
+
+    const els = {
+      form: document.getElementById("itemForm"),
+      formTitle: document.getElementById("formTitle"),
+      editingId: document.getElementById("editingId"),
+      productCode: document.getElementById("productCode"),
+      name: document.getElementById("name"),
+      spec: document.getElementById("spec"),
+      supplierSelect: document.getElementById("supplierSelect"),
+      supplierOther: document.getElementById("supplierOther"),
+      stock: document.getElementById("stock"),
+      minStock: document.getElementById("minStock"),
+      unit: document.getElementById("unit"),
+      price: document.getElementById("price"),
+      monthlyIn: document.getElementById("monthlyIn"),
+      monthlyInDate: document.getElementById("monthlyInDate"),
+      monthlyOut: document.getElementById("monthlyOut"),
+      monthlyOutDate: document.getElementById("monthlyOutDate"),
+      updatedAt: document.getElementById("updatedAt"),
+      memo: document.getElementById("memo"),
+      clearFormButton: document.getElementById("clearFormButton"),
+      newButton: document.getElementById("newButton"),
+      search: document.getElementById("search"),
+      itemsBody: document.getElementById("itemsBody"),
+      emptyState: document.getElementById("emptyState"),
+      totalValue: document.getElementById("totalValue"),
+      totalIn: document.getElementById("totalIn"),
+      totalOut: document.getElementById("totalOut"),
+      lowCount: document.getElementById("lowCount"),
+      headerExportButton: document.getElementById("headerExportButton"),
+      reportMonth: document.getElementById("reportMonth"),
+      reportAdmin: document.getElementById("reportAdmin"),
+      printReportButton: document.getElementById("printReportButton"),
+      printTitle: document.getElementById("printTitle"),
+      printTargetMonth: document.getElementById("printTargetMonth"),
+      printItemCount: document.getElementById("printItemCount"),
+      printOutputDate: document.getElementById("printOutputDate"),
+      printTotalValue: document.getElementById("printTotalValue"),
+      printTotalIn: document.getElementById("printTotalIn"),
+      printTotalOut: document.getElementById("printTotalOut"),
+      printRows: document.getElementById("printRows"),
+      printFooterDate: document.getElementById("printFooterDate"),
+      printAdminName: document.getElementById("printAdminName"),
+      importMode: document.getElementById("importMode"),
+      exportButton: document.getElementById("exportButton"),
+      importInput: document.getElementById("importInput"),
+      salesKingImportInput: document.getElementById("salesKingImportInput"),
+      toast: document.getElementById("toast")
+    };
+
+    let items = loadItems();
+
+    function today() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function compactDate() {
+      return today().replace(/-/g, "");
+    }
+
+    function currentMonth() {
+      return today().slice(0, 7);
+    }
+
+    function uid() {
+      return "item-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+    }
+
+    function numberValue(value) {
+      const num = Number(String(value ?? "").replace(/[,\s￥¥円]/g, ""));
+      return Number.isFinite(num) ? num : 0;
+    }
+
+    function integerValue(value) {
+      return Math.max(0, Math.trunc(numberValue(value)));
+    }
+
+    function sanitizeIntegerInput(input) {
+      const cleaned = (String(input.value || "").match(/\d+/) || [""])[0];
+      input.value = cleaned || "0";
+    }
+
+    function formatQuantity(value) {
+      return integerValue(value).toLocaleString("ja-JP", { maximumFractionDigits: 0 });
+    }
+
+    function formatMoney(value) {
+      return numberValue(value).toLocaleString("ja-JP", {
+        style: "currency",
+        currency: "JPY",
+        maximumFractionDigits: 0
+      });
+    }
+
+    function formatPlainMoney(value) {
+      return numberValue(value).toLocaleString("ja-JP", { maximumFractionDigits: 0 });
+    }
+
+    function formatSlashDate(value) {
+      const source = value || today();
+      const parts = String(source).split("-");
+      return parts.length === 3 ? `${parts[0]}/${parts[1]}/${parts[2]}` : source;
+    }
+
+    function formatMonthLabel(value) {
+      const source = value || currentMonth();
+      const parts = String(source).split("-");
+      if (parts.length < 2) return source;
+      return `${parts[0]}年${parts[1]}月`;
+    }
+
+    function normalizeUnit(value) {
+      const unit = String(value || "").trim();
+      if (UNITS.includes(unit)) return unit;
+      if (unit.includes("缶")) return "ペール";
+      if (unit.includes("本")) return "ドラム";
+      if (unit.includes("ケース")) return "箱";
+      if (unit.includes("箱")) return "箱";
+      return "バラ";
+    }
+
+    function normalizeItem(raw) {
+      return {
+        id: raw.id || uid(),
+        productCode: String(raw.productCode || "").trim(),
+        name: String(raw.name || "").trim(),
+        spec: String(raw.spec || "").trim(),
+        supplier: String(raw.supplier || "").trim(),
+        stock: integerValue(raw.stock),
+        minStock: integerValue(raw.minStock),
+        unit: normalizeUnit(raw.unit),
+        price: integerValue(raw.price),
+        monthlyIn: integerValue(raw.monthlyIn),
+        monthlyInDate: raw.monthlyInDate || "",
+        monthlyOut: integerValue(raw.monthlyOut),
+        monthlyOutDate: raw.monthlyOutDate || "",
+        updatedAt: raw.updatedAt || today(),
+        memo: String(raw.memo || "").trim(),
+        referenceSubtotal: integerValue(raw.referenceSubtotal)
+      };
+    }
+
+    function supplierValue() {
+      return els.supplierSelect.value === "その他" ? els.supplierOther.value.trim() : els.supplierSelect.value;
+    }
+
+    function setSupplier(value) {
+      const supplier = String(value || "").trim();
+      if (!supplier || SUPPLIERS.includes(supplier)) {
+        els.supplierSelect.value = supplier || SUPPLIERS[0];
+        els.supplierOther.value = "";
+        els.supplierOther.hidden = true;
+      } else {
+        els.supplierSelect.value = "その他";
+        els.supplierOther.value = supplier;
+        els.supplierOther.hidden = false;
+      }
+    }
+
+    function toggleSupplierOther() {
+      const isOther = els.supplierSelect.value === "その他";
+      els.supplierOther.hidden = !isOther;
+      if (!isOther) els.supplierOther.value = "";
+    }
+
+    function duplicateKey(item) {
+      return [item.name, item.spec, item.supplier].map(value => String(value || "").trim().toLowerCase()).join("||");
+    }
+
+    function salesKingKey(item) {
+      const code = String(item.productCode || "").trim().toLowerCase();
+      if (code) return "code:" + code;
+      return salesKingFallbackKey(item);
+    }
+
+    function salesKingFallbackKey(item) {
+      return "name-unit:" + [item.name, item.unit].map(value => String(value || "").trim().toLowerCase()).join("||");
+    }
+
+    function loadItems() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+        return Array.isArray(saved) ? saved.map(normalizeItem) : [];
+      } catch (error) {
+        console.warn("Failed to load inventory data:", error);
+        return [];
+      }
+    }
+
+    function saveItems() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => els.toast.classList.remove("show"), 2200);
+    }
+
+    function filteredItems() {
+      const query = els.search.value.trim().toLowerCase();
+      if (!query) return items;
+      return items.filter(item => [item.productCode, item.name, item.spec, item.supplier].some(value => String(value || "").toLowerCase().includes(query)));
+    }
+
+    function updateSummary() {
+      const totalValue = items.reduce((sum, item) => sum + item.stock * item.price, 0);
+      const totalIn = items.reduce((sum, item) => sum + item.monthlyIn, 0);
+      const totalOut = items.reduce((sum, item) => sum + item.monthlyOut, 0);
+      const lowCount = items.filter(item => item.stock <= item.minStock).length;
+
+      els.totalValue.textContent = formatMoney(totalValue);
+      els.totalIn.textContent = formatQuantity(totalIn);
+      els.totalOut.textContent = formatQuantity(totalOut);
+      els.lowCount.textContent = lowCount + " 件";
+    }
+
+    function render() {
+      const rows = filteredItems();
+      els.itemsBody.innerHTML = "";
+      els.emptyState.hidden = rows.length !== 0;
+
+      for (const item of rows) {
+        const tr = document.createElement("tr");
+        const isLow = item.stock <= item.minStock;
+        if (isLow) tr.classList.add("low");
+        const subtotal = item.stock * item.price;
+
+        tr.innerHTML = `
+          <td class="name-cell">
+            <div class="product-name"></div>
+            <div class="meta product-code"></div>
+            <div class="meta spec"></div>
+            <div class="meta supplier"></div>
+            <div class="meta memo"></div>
+          </td>
+          <td data-label="現在庫">
+            <div class="stock-control">
+              <button type="button" data-action="decrease" data-id="${item.id}" aria-label="在庫を減らす">−</button>
+              <input type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*" value="${item.stock}" data-action="stock-input" data-id="${item.id}" aria-label="現在庫">
+              <button type="button" data-action="increase" data-id="${item.id}" aria-label="在庫を増やす">＋</button>
+            </div>
+          </td>
+          <td data-label="最低" class="number">${formatQuantity(item.minStock)}</td>
+          <td data-label="単位">${item.unit}</td>
+          <td data-label="単価" class="money">${formatMoney(item.price)}</td>
+          <td data-label="小計" class="money"><strong>${formatMoney(subtotal)}</strong></td>
+          <td data-label="当月入荷" class="number">${formatQuantity(item.monthlyIn)}</td>
+          <td data-label="入荷日">${item.monthlyInDate || ""}</td>
+          <td data-label="当月出荷" class="number">${formatQuantity(item.monthlyOut)}</td>
+          <td data-label="出荷日">${item.monthlyOutDate || ""}</td>
+          <td data-label="最終更新日">${item.updatedAt || ""}</td>
+          <td data-label="状態">${isLow ? '<span class="badge badge-low">要補充</span>' : '<span class="badge badge-ok">適正</span>'}</td>
+          <td data-label="操作">
+            <div class="row-actions">
+              <button type="button" data-action="edit" data-id="${item.id}">編集</button>
+              <button type="button" class="btn-danger" data-action="delete" data-id="${item.id}">削除</button>
+            </div>
+          </td>
+        `;
+
+        tr.querySelector(".product-name").textContent = item.name || "名称未入力";
+        tr.querySelector(".product-code").textContent = item.productCode ? "商品コード: " + item.productCode : "";
+        tr.querySelector(".spec").textContent = item.spec ? "規格: " + item.spec : "規格: -";
+        tr.querySelector(".supplier").textContent = item.supplier ? "仕入先: " + item.supplier : "仕入先: -";
+        tr.querySelector(".memo").textContent = item.memo ? "メモ: " + item.memo : "";
+        els.itemsBody.appendChild(tr);
+      }
+
+      updateSummary();
+    }
+
+    function resetForm() {
+      els.form.reset();
+      els.editingId.value = "";
+      els.productCode.value = "";
+      els.formTitle.textContent = "商品登録";
+      setSupplier("");
+      els.stock.value = "0";
+      els.minStock.value = "0";
+      els.price.value = "0";
+      els.monthlyIn.value = "0";
+      els.monthlyInDate.value = "";
+      els.monthlyOut.value = "0";
+      els.monthlyOutDate.value = "";
+      els.unit.value = "ペール";
+      els.updatedAt.value = today();
+    }
+
+    function formItem() {
+      const existing = items.find(entry => entry.id === els.editingId.value);
+      return normalizeItem({
+        id: els.editingId.value || uid(),
+        productCode: els.productCode.value || (existing && existing.productCode) || "",
+        name: els.name.value,
+        spec: els.spec.value,
+        supplier: supplierValue(),
+        stock: els.stock.value,
+        minStock: els.minStock.value,
+        unit: els.unit.value,
+        price: els.price.value,
+        monthlyIn: els.monthlyIn.value,
+        monthlyInDate: els.monthlyInDate.value,
+        monthlyOut: els.monthlyOut.value,
+        monthlyOutDate: els.monthlyOutDate.value,
+        updatedAt: els.updatedAt.value || today(),
+        memo: els.memo.value,
+        referenceSubtotal: existing && existing.referenceSubtotal
+      });
+    }
+
+    function editItem(id) {
+      const item = items.find(entry => entry.id === id);
+      if (!item) return;
+      els.editingId.value = item.id;
+      els.productCode.value = item.productCode || "";
+      els.name.value = item.name;
+      els.spec.value = item.spec;
+      setSupplier(item.supplier);
+      els.stock.value = item.stock;
+      els.minStock.value = item.minStock;
+      els.unit.value = item.unit;
+      els.price.value = item.price;
+      els.monthlyIn.value = item.monthlyIn;
+      els.monthlyInDate.value = item.monthlyInDate || "";
+      els.monthlyOut.value = item.monthlyOut;
+      els.monthlyOutDate.value = item.monthlyOutDate || "";
+      els.updatedAt.value = item.updatedAt || today();
+      els.memo.value = item.memo;
+      els.formTitle.textContent = "商品編集";
+      els.name.focus();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function deleteItem(id) {
+      const item = items.find(entry => entry.id === id);
+      if (!item) return;
+      if (!confirm(`「${item.name || "名称未入力"}」を削除しますか？`)) return;
+      items = items.filter(entry => entry.id !== id);
+      if (els.editingId.value === id) resetForm();
+      saveItems();
+      render();
+      showToast("削除しました");
+    }
+
+    function updateStock(id, nextStock) {
+      const item = items.find(entry => entry.id === id);
+      if (!item) return;
+      item.stock = integerValue(nextStock);
+      item.updatedAt = today();
+      saveItems();
+      render();
+    }
+
+    function renderPrintReport() {
+      const monthLabel = formatMonthLabel(els.reportMonth.value || currentMonth());
+      const outputDate = formatSlashDate(today());
+      const totalValue = items.reduce((sum, item) => sum + item.stock * item.price, 0);
+      const totalIn = items.reduce((sum, item) => sum + item.monthlyIn, 0);
+      const totalOut = items.reduce((sum, item) => sum + item.monthlyOut, 0);
+
+      els.printTitle.textContent = monthLabel + " 在庫一覧";
+      els.printTargetMonth.textContent = monthLabel;
+      els.printItemCount.textContent = items.length + " 件";
+      els.printOutputDate.textContent = outputDate;
+      els.printFooterDate.textContent = outputDate;
+      els.printAdminName.textContent = els.reportAdmin.value.trim();
+      els.printTotalValue.textContent = formatMoney(totalValue);
+      els.printTotalIn.textContent = formatQuantity(totalIn);
+      els.printTotalOut.textContent = formatQuantity(totalOut);
+      els.printRows.innerHTML = "";
+
+      for (const item of items) {
+        const tr = document.createElement("tr");
+        if (item.stock <= item.minStock) tr.classList.add("low-stock");
+        const cells = [
+          { text: item.name || "名称未入力" },
+          { text: item.spec || "" },
+          { text: item.supplier || "" },
+          { text: item.unit || "" },
+          { text: formatQuantity(item.stock), className: "num" },
+          { text: formatPlainMoney(item.price), className: "yen" },
+          { text: formatPlainMoney(item.stock * item.price), className: "yen" },
+          { text: formatQuantity(item.monthlyIn), className: "num" },
+          { text: formatQuantity(item.monthlyOut), className: "num" }
+        ];
+
+        for (const cell of cells) {
+          const td = document.createElement("td");
+          td.textContent = cell.text;
+          if (cell.className) td.className = cell.className;
+          tr.appendChild(td);
+        }
+        els.printRows.appendChild(tr);
+      }
+    }
+
+    function printReport() {
+      renderPrintReport();
+      window.print();
+    }
+
+    function csvEscape(value) {
+      const text = String(value ?? "");
+      return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    }
+
+    function exportCsv() {
+      const lines = [HEADERS.map(csvEscape).join(",")];
+      for (const item of items) {
+        lines.push([
+          item.id,
+          item.productCode,
+          item.name,
+          item.spec,
+          item.supplier,
+          item.stock,
+          item.minStock,
+          item.unit,
+          item.price,
+          item.monthlyIn,
+          item.monthlyInDate,
+          item.monthlyOut,
+          item.monthlyOutDate,
+          item.updatedAt,
+          item.memo,
+          item.referenceSubtotal || ""
+        ].map(csvEscape).join(","));
+      }
+
+      const blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "inventory_backup_" + compactDate() + ".csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast("CSVを出力しました");
+    }
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let quoted = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (quoted) {
+          if (char === '"' && next === '"') {
+            cell += '"';
+            i++;
+          } else if (char === '"') {
+            quoted = false;
+          } else {
+            cell += char;
+          }
+        } else if (char === '"') {
+          quoted = true;
+        } else if (char === ",") {
+          row.push(cell);
+          cell = "";
+        } else if (char === "\n") {
+          row.push(cell);
+          rows.push(row);
+          row = [];
+          cell = "";
+        } else if (char !== "\r") {
+          cell += char;
+        }
+      }
+
+      if (cell || row.length) {
+        row.push(cell);
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    function decodeCsvBuffer(buffer) {
+      const utf8 = new TextDecoder("utf-8").decode(buffer);
+      const sjis = new TextDecoder("shift_jis").decode(buffer);
+      const utf8Bad = (utf8.match(/\uFFFD/g) || []).length;
+      const sjisBad = (sjis.match(/\uFFFD/g) || []).length;
+      return sjisBad < utf8Bad ? sjis : utf8;
+    }
+
+    function headerIndex(header, names) {
+      for (const name of names) {
+        const index = header.indexOf(name);
+        if (index >= 0) return index;
+      }
+      return -1;
+    }
+
+    function numericCell(row, index, rowNumber, label, errors) {
+      const raw = index >= 0 ? String(row[index] || "").trim() : "";
+      if (!raw) return 0;
+      const cleaned = raw.replace(/[,\s￥¥円]/g, "");
+      if (!/^\d+(\.\d+)?$/.test(cleaned)) {
+        errors.push(rowNumber + "行目: " + label + " が数値に変換できません（" + raw + "）");
+        return 0;
+      }
+      return integerValue(cleaned);
+    }
+
+    function salesKingImportKey(item) {
+      return salesKingKey(item);
+    }
+
+    function importSalesKingCsv(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = decodeCsvBuffer(reader.result).replace(/^\ufeff/, "");
+        const rows = parseCsv(text).filter(row => row.some(cell => String(cell).trim()));
+        if (!rows.length) {
+          showToast("読み込める行がありません");
+          return;
+        }
+
+        const header = rows[0].map(value => String(value || "").trim());
+        const required = ["商品名", "単位", "残高数量", "残高単価", "受入数量", "払出数量"];
+        const missing = required.filter(name => !header.includes(name));
+        if (missing.length) {
+          alert("販売王CSVの必須列が見つかりません。\n不足列: " + missing.join("、"));
+          return;
+        }
+
+        const indexes = {
+          productCode: headerIndex(header, ["商品コード"]),
+          name: headerIndex(header, ["商品名"]),
+          spec: headerIndex(header, ["規格", "粘度/規格"]),
+          unit: headerIndex(header, ["単位"]),
+          stock: headerIndex(header, ["残高数量"]),
+          price: headerIndex(header, ["残高単価"]),
+          referenceSubtotal: headerIndex(header, ["残高金額"]),
+          monthlyIn: headerIndex(header, ["受入数量"]),
+          monthlyOut: headerIndex(header, ["払出数量"])
+        };
+
+        const errors = [];
+        const imported = [];
+        rows.slice(1).forEach((row, rowIndex) => {
+          const rowNumber = rowIndex + 2;
+          const name = String(row[indexes.name] || "").trim();
+          if (!name) return;
+
+          imported.push(normalizeItem({
+            productCode: indexes.productCode >= 0 ? row[indexes.productCode] : "",
+            name,
+            spec: indexes.spec >= 0 ? row[indexes.spec] : "",
+            supplier: "",
+            stock: numericCell(row, indexes.stock, rowNumber, "残高数量", errors),
+            minStock: 0,
+            unit: indexes.unit >= 0 ? row[indexes.unit] : "",
+            price: numericCell(row, indexes.price, rowNumber, "残高単価", errors),
+            monthlyIn: numericCell(row, indexes.monthlyIn, rowNumber, "受入数量", errors),
+            monthlyOut: numericCell(row, indexes.monthlyOut, rowNumber, "払出数量", errors),
+            updatedAt: today(),
+            memo: "",
+            referenceSubtotal: indexes.referenceSubtotal >= 0 ? numericCell(row, indexes.referenceSubtotal, rowNumber, "残高金額", errors) : 0
+          }));
+        });
+
+        if (errors.length) {
+          alert("販売王CSVの数値変換でエラーがあります。\n" + errors.slice(0, 20).join("\n") + (errors.length > 20 ? "\nほか " + (errors.length - 20) + " 件" : ""));
+          return;
+        }
+
+        if (!imported.length) {
+          showToast("有効な商品データがありません");
+          return;
+        }
+
+        const mode = els.importMode.value;
+        if (mode === "replace") {
+          items = imported;
+          showToast(imported.length + "件を販売王CSVで上書きしました");
+        } else {
+          const byKey = new Set();
+          for (const item of items) {
+            byKey.add(salesKingImportKey(item));
+            byKey.add(salesKingFallbackKey(item));
+          }
+          let added = 0;
+          let skipped = 0;
+          for (const item of imported) {
+            const key = salesKingImportKey(item);
+            const fallbackKey = salesKingFallbackKey(item);
+            if (byKey.has(key) || byKey.has(fallbackKey)) {
+              skipped++;
+            } else {
+              items.push(item);
+              byKey.add(key);
+              byKey.add(fallbackKey);
+              added++;
+            }
+          }
+          showToast("販売王CSV: " + added + "件追加、重複" + skipped + "件をスキップしました");
+        }
+
+        saveItems();
+        render();
+        renderPrintReport();
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function importCsv(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const text = String(reader.result || "").replace(/^\ufeff/, "");
+        const rows = parseCsv(text).filter(row => row.some(cell => String(cell).trim()));
+        if (!rows.length) {
+          showToast("読み込める行がありません");
+          return;
+        }
+
+        const header = rows[0].map(value => value.trim());
+        const hasHeader = header.includes("商品名") && header.includes("現在庫");
+        const dataRows = hasHeader ? rows.slice(1) : rows;
+        const legacyHeaders = ["ID", "商品名", "粘度/規格", "仕入先", "現在庫", "最低在庫", "単位", "単価", "当月入荷", "入荷日", "当月出荷", "出荷日", "最終更新日", "メモ"];
+        const fallbackHeaders = rows[0].length === HEADERS.length ? HEADERS
+          : rows[0].length === HEADERS.length - 1 ? HEADERS.slice(1)
+          : rows[0].length === legacyHeaders.length ? legacyHeaders
+          : rows[0].length === legacyHeaders.length - 1 ? legacyHeaders.slice(1)
+          : HEADERS.slice(1);
+        const indexOf = name => hasHeader ? header.indexOf(name) : fallbackHeaders.indexOf(name);
+        const cell = (row, name) => {
+          const index = indexOf(name);
+          return index >= 0 ? row[index] : "";
+        };
+
+        const imported = dataRows.map(row => normalizeItem({
+          id: cell(row, "ID"),
+          productCode: cell(row, "商品コード"),
+          name: cell(row, "商品名"),
+          spec: cell(row, "粘度/規格"),
+          supplier: cell(row, "仕入先"),
+          stock: cell(row, "現在庫"),
+          minStock: cell(row, "最低在庫"),
+          unit: cell(row, "単位"),
+          price: cell(row, "単価"),
+          monthlyIn: cell(row, "当月入荷"),
+          monthlyInDate: cell(row, "入荷日"),
+          monthlyOut: cell(row, "当月出荷"),
+          monthlyOutDate: cell(row, "出荷日"),
+          updatedAt: cell(row, "最終更新日"),
+          memo: cell(row, "メモ"),
+          referenceSubtotal: cell(row, "販売王残高金額")
+        })).filter(item => item.name || item.spec || item.supplier);
+
+        if (!imported.length) {
+          showToast("有効な商品データがありません");
+          return;
+        }
+
+        const mode = els.importMode.value;
+        if (mode === "replace") {
+          items = imported;
+        } else {
+          const byKey = new Map(items.map((item, index) => [duplicateKey(item), index]));
+          let added = 0;
+          let skipped = 0;
+          for (const item of imported) {
+            const key = duplicateKey(item);
+            if (byKey.has(key)) {
+              skipped++;
+            } else {
+              items.push(item);
+              byKey.set(key, items.length - 1);
+              added++;
+            }
+          }
+          showToast(added + "件追加、重複" + skipped + "件をスキップしました");
+        }
+        saveItems();
+        render();
+        if (mode === "replace") showToast(imported.length + "件で上書きしました");
+      };
+      reader.readAsText(file, "utf-8");
+    }
+
+    els.form.addEventListener("submit", event => {
+      event.preventDefault();
+      const item = formItem();
+      if (!item.name) {
+        els.name.focus();
+        showToast("商品名を入力してください");
+        return;
+      }
+
+      const index = items.findIndex(entry => entry.id === item.id);
+      if (index >= 0) {
+        items[index] = item;
+        showToast("更新しました");
+      } else {
+        items.push(item);
+        showToast("登録しました");
+      }
+      saveItems();
+      render();
+      resetForm();
+    });
+
+    els.clearFormButton.addEventListener("click", resetForm);
+    els.newButton.addEventListener("click", resetForm);
+    els.supplierSelect.addEventListener("change", toggleSupplierOther);
+    [els.stock, els.minStock, els.price, els.monthlyIn, els.monthlyOut].forEach(input => {
+      input.addEventListener("input", () => {
+        if (/[^\d]/.test(input.value)) sanitizeIntegerInput(input);
+      });
+      input.addEventListener("blur", () => sanitizeIntegerInput(input));
+    });
+    els.search.addEventListener("input", render);
+    els.headerExportButton.addEventListener("click", exportCsv);
+    els.printReportButton.addEventListener("click", printReport);
+    els.exportButton.addEventListener("click", exportCsv);
+    els.importInput.addEventListener("change", event => {
+      const file = event.target.files && event.target.files[0];
+      if (file) importCsv(file);
+      event.target.value = "";
+    });
+    els.salesKingImportInput.addEventListener("change", event => {
+      const file = event.target.files && event.target.files[0];
+      if (file) importSalesKingCsv(file);
+      event.target.value = "";
+    });
+
+    els.itemsBody.addEventListener("click", event => {
+      const target = event.target.closest("[data-action]");
+      if (!target) return;
+      const id = target.dataset.id;
+      const item = items.find(entry => entry.id === id);
+      if (!item) return;
+
+      if (target.dataset.action === "increase") updateStock(id, item.stock + 1);
+      if (target.dataset.action === "decrease") updateStock(id, item.stock - 1);
+      if (target.dataset.action === "edit") editItem(id);
+      if (target.dataset.action === "delete") deleteItem(id);
+    });
+
+    els.itemsBody.addEventListener("change", event => {
+      const target = event.target;
+      if (target.dataset.action === "stock-input") {
+        sanitizeIntegerInput(target);
+        updateStock(target.dataset.id, target.value);
+      }
+    });
+
+    resetForm();
+    els.reportMonth.value = currentMonth();
+    render();
+    renderPrintReport();
+  </script>
+</body>
+</html>
