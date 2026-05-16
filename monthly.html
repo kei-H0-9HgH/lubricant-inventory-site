@@ -685,7 +685,7 @@
         <h2>商品別 集計表</h2>
         <div class="panel-actions">
           <button type="button" id="printButton" class="btn-primary">印刷</button>
-          <button type="button" id="exportButton" class="btn-accent">バックアップCSV出力</button>
+          <button type="button" id="exportButton" class="btn-accent">CSV出力</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -718,7 +718,7 @@
   <script>
     const STORAGE_KEY = "lubricantInventoryItems.v1";
     const UNITS = ["ペール", "ドラム", "箱", "バラ"];
-    const HEADERS = ["ID", "商品コード", "商品名", "粘度/規格", "仕入先", "現在庫", "最低在庫", "単位", "単価", "当月入荷", "入荷日", "当月出荷", "出荷日", "最終更新日", "メモ", "販売王残高金額"];
+    const HEADERS = ["ID", "商品コード", "商品名", "粘度/規格", "仕入先", "現在庫", "最低在庫", "単位", "単価", "当月入荷", "入荷日", "当月出荷", "出荷日", "最終更新日", "メモ", "デモ参考金額"];
 
     const els = {
       itemCount: document.getElementById("itemCount"),
@@ -849,12 +849,12 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "inventory_backup_" + compactDate() + ".csv";
+      link.download = "demo_inventory_" + compactDate() + ".csv";
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      showToast("バックアップCSVを出力しました");
+      showToast("CSVを出力しました");
     }
 
     function updateSummary(items) {

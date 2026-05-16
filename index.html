@@ -120,7 +120,7 @@
       border-color: var(--primary-dark);
     }
 
-    .backup-button {
+    .export-button {
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
@@ -128,7 +128,7 @@
       padding: 0 16px;
     }
 
-    .backup-button:hover {
+    .export-button:hover {
       background: #9d5519;
       border-color: #9d5519;
     }
@@ -769,7 +769,7 @@
       <div class="header-actions">
         <a class="nav-button" href="products.html">商品マスタを見る</a>
         <a class="nav-button" href="monthly.html">月次集計を見る</a>
-        <button type="button" class="nav-button backup-button" id="headerExportButton">バックアップCSV出力</button>
+        <button type="button" class="nav-button export-button" id="headerExportButton">CSV出力</button>
       </div>
     </header>
 
@@ -825,9 +825,9 @@
             <div class="field">
               <label for="supplierSelect">仕入先</label>
               <select id="supplierSelect">
-                <option>上原成商事（株）</option>
-                <option>株式会社ホクト</option>
-                <option>中国精油株式会社</option>
+                <option>仕入先A</option>
+                <option>仕入先B</option>
+                <option>仕入先C</option>
                 <option>その他</option>
               </select>
               <input id="supplierOther" placeholder="仕入先を入力" hidden>
@@ -903,10 +903,10 @@
               <option value="append">追加</option>
               <option value="replace">上書き</option>
             </select>
-            <button type="button" id="exportButton" class="btn-accent">バックアップCSV出力</button>
+            <button type="button" id="exportButton" class="btn-accent">CSV出力</button>
             <label class="file-button btn-accent">
-              販売王CSV読込
-              <input id="salesKingImportInput" type="file" accept=".csv,text/csv">
+              デモCSV読込
+              <input id="demoCsvImportInput" type="file" accept=".csv,text/csv">
             </label>
             <label class="file-button">
               CSV読込
@@ -990,8 +990,8 @@
   <script>
     const STORAGE_KEY = "lubricantInventoryItems.v1";
     const UNITS = ["ペール", "ドラム", "箱", "バラ"];
-    const SUPPLIERS = ["上原成商事（株）", "株式会社ホクト", "中国精油株式会社"];
-    const HEADERS = ["ID", "商品コード", "商品名", "粘度/規格", "仕入先", "現在庫", "最低在庫", "単位", "単価", "当月入荷", "入荷日", "当月出荷", "出荷日", "最終更新日", "メモ", "販売王残高金額"];
+    const SUPPLIERS = ["仕入先A", "仕入先B", "仕入先C"];
+    const HEADERS = ["ID", "商品コード", "商品名", "粘度/規格", "仕入先", "現在庫", "最低在庫", "単位", "単価", "当月入荷", "入荷日", "当月出荷", "出荷日", "最終更新日", "メモ", "デモ参考金額"];
 
     const els = {
       form: document.getElementById("itemForm"),
@@ -1038,7 +1038,7 @@
       importMode: document.getElementById("importMode"),
       exportButton: document.getElementById("exportButton"),
       importInput: document.getElementById("importInput"),
-      salesKingImportInput: document.getElementById("salesKingImportInput"),
+      demoCsvImportInput: document.getElementById("demoCsvImportInput"),
       toast: document.getElementById("toast")
     };
 
@@ -1161,13 +1161,13 @@
       return [item.name, item.spec, item.supplier].map(value => String(value || "").trim().toLowerCase()).join("||");
     }
 
-    function salesKingKey(item) {
+    function demoCsvKey(item) {
       const code = String(item.productCode || "").trim().toLowerCase();
       if (code) return "code:" + code;
-      return salesKingFallbackKey(item);
+      return demoCsvFallbackKey(item);
     }
 
-    function salesKingFallbackKey(item) {
+    function demoCsvFallbackKey(item) {
       return "name-unit:" + [item.name, item.unit].map(value => String(value || "").trim().toLowerCase()).join("||");
     }
 
@@ -1427,7 +1427,7 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "inventory_backup_" + compactDate() + ".csv";
+      link.download = "demo_inventory_" + compactDate() + ".csv";
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1503,11 +1503,11 @@
       return integerValue(cleaned);
     }
 
-    function salesKingImportKey(item) {
-      return salesKingKey(item);
+    function demoCsvImportKey(item) {
+      return demoCsvKey(item);
     }
 
-    function importSalesKingCsv(file) {
+    function importDemoCsvCsv(file) {
       const reader = new FileReader();
       reader.onload = () => {
         const text = decodeCsvBuffer(reader.result).replace(/^\ufeff/, "");
@@ -1521,7 +1521,7 @@
         const required = ["商品名", "単位", "残高数量", "残高単価", "受入数量", "払出数量"];
         const missing = required.filter(name => !header.includes(name));
         if (missing.length) {
-          alert("販売王CSVの必須列が見つかりません。\n不足列: " + missing.join("、"));
+          alert("デモCSVの必須列が見つかりません。\n不足列: " + missing.join("、"));
           return;
         }
 
@@ -1532,7 +1532,7 @@
           unit: headerIndex(header, ["単位"]),
           stock: headerIndex(header, ["残高数量"]),
           price: headerIndex(header, ["残高単価"]),
-          referenceSubtotal: headerIndex(header, ["残高金額"]),
+          referenceSubtotal: headerIndex(header, ["参考金額"]),
           monthlyIn: headerIndex(header, ["受入数量"]),
           monthlyOut: headerIndex(header, ["払出数量"])
         };
@@ -1557,12 +1557,12 @@
             monthlyOut: numericCell(row, indexes.monthlyOut, rowNumber, "払出数量", errors),
             updatedAt: today(),
             memo: "",
-            referenceSubtotal: indexes.referenceSubtotal >= 0 ? numericCell(row, indexes.referenceSubtotal, rowNumber, "残高金額", errors) : 0
+            referenceSubtotal: indexes.referenceSubtotal >= 0 ? numericCell(row, indexes.referenceSubtotal, rowNumber, "参考金額", errors) : 0
           }));
         });
 
         if (errors.length) {
-          alert("販売王CSVの数値変換でエラーがあります。\n" + errors.slice(0, 20).join("\n") + (errors.length > 20 ? "\nほか " + (errors.length - 20) + " 件" : ""));
+          alert("デモCSVの数値変換でエラーがあります。\n" + errors.slice(0, 20).join("\n") + (errors.length > 20 ? "\nほか " + (errors.length - 20) + " 件" : ""));
           return;
         }
 
@@ -1574,18 +1574,18 @@
         const mode = els.importMode.value;
         if (mode === "replace") {
           items = imported;
-          showToast(imported.length + "件を販売王CSVで上書きしました");
+          showToast(imported.length + "件をデモCSVで上書きしました");
         } else {
           const byKey = new Set();
           for (const item of items) {
-            byKey.add(salesKingImportKey(item));
-            byKey.add(salesKingFallbackKey(item));
+            byKey.add(demoCsvImportKey(item));
+            byKey.add(demoCsvFallbackKey(item));
           }
           let added = 0;
           let skipped = 0;
           for (const item of imported) {
-            const key = salesKingImportKey(item);
-            const fallbackKey = salesKingFallbackKey(item);
+            const key = demoCsvImportKey(item);
+            const fallbackKey = demoCsvFallbackKey(item);
             if (byKey.has(key) || byKey.has(fallbackKey)) {
               skipped++;
             } else {
@@ -1595,7 +1595,7 @@
               added++;
             }
           }
-          showToast("販売王CSV: " + added + "件追加、重複" + skipped + "件をスキップしました");
+          showToast("デモCSV: " + added + "件追加、重複" + skipped + "件をスキップしました");
         }
 
         saveItems();
@@ -1646,7 +1646,7 @@
           monthlyOutDate: cell(row, "出荷日"),
           updatedAt: cell(row, "最終更新日"),
           memo: cell(row, "メモ"),
-          referenceSubtotal: cell(row, "販売王残高金額")
+          referenceSubtotal: cell(row, "デモ参考金額")
         })).filter(item => item.name || item.spec || item.supplier);
 
         if (!imported.length) {
@@ -1720,9 +1720,9 @@
       if (file) importCsv(file);
       event.target.value = "";
     });
-    els.salesKingImportInput.addEventListener("change", event => {
+    els.demoCsvImportInput.addEventListener("change", event => {
       const file = event.target.files && event.target.files[0];
-      if (file) importSalesKingCsv(file);
+      if (file) importDemoCsvCsv(file);
       event.target.value = "";
     });
 
