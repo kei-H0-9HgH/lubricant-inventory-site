@@ -5,10 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="潤滑油在庫DEMO">
+  <meta name="apple-mobile-web-app-title" content="潤滑油在庫">
   <meta name="theme-color" content="#f6f7f2">
-  <link rel="apple-touch-icon" href="icon.png">
-  <title>潤滑油 在庫管理 DEMO</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <script src="app-version.js"></script>
+  <script src="pwa-update.js" defer></script>
+  <title>潤滑油 在庫管理</title>
   <style>
     :root {
       --bg: #f6f7f2;
@@ -59,7 +63,7 @@
       background: #fff;
       color: var(--text);
       cursor: pointer;
-      min-height: 36px;
+      min-height: 44px;
       padding: 0 12px;
       transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
@@ -78,7 +82,7 @@
 
     .app {
       min-height: 100vh;
-      padding: 18px;
+      padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
     }
 
     .header {
@@ -109,7 +113,7 @@
       color: #fff;
       display: inline-flex;
       font-weight: 700;
-      min-height: 36px;
+      min-height: 44px;
       padding: 0 12px;
       text-decoration: none;
       white-space: nowrap;
@@ -120,7 +124,7 @@
       border-color: var(--primary-dark);
     }
 
-    .export-button {
+    .backup-button {
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
@@ -128,7 +132,7 @@
       padding: 0 16px;
     }
 
-    .export-button:hover {
+    .backup-button:hover {
       background: #9d5519;
       border-color: #9d5519;
     }
@@ -138,19 +142,6 @@
       font-size: 1.45rem;
       line-height: 1.3;
       font-weight: 700;
-    }
-
-    .demo-label {
-      background: var(--accent);
-      border-radius: 4px;
-      color: #fff;
-      display: inline-block;
-      font-size: 0.78em;
-      font-weight: 800;
-      letter-spacing: 0;
-      margin-left: 6px;
-      padding: 2px 8px;
-      vertical-align: 0.08em;
     }
 
     .subtitle {
@@ -198,6 +189,50 @@
       background: var(--danger-bg);
     }
 
+    .backup-note {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      justify-content: space-between;
+      margin: 0 auto 14px;
+      max-width: 1380px;
+      padding: 10px 12px;
+    }
+
+    .backup-note strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .backup-note .operation-note {
+      flex-basis: 100%;
+    }
+
+    .backup-note .note-item {
+      display: inline-block;
+      margin-right: 14px;
+    }
+
+    .safety-notice {
+      background: #eef8f1;
+      border: 1px solid #b9d8c3;
+      border-left: 5px solid var(--primary);
+      border-radius: var(--radius);
+      color: var(--text);
+      margin: 0 auto 14px;
+      max-width: 1380px;
+      padding: 10px 12px;
+    }
+
+    .safety-notice strong {
+      color: var(--primary-dark);
+    }
+
     .print-controls {
       background: var(--panel);
       border: 1px solid var(--line);
@@ -217,7 +252,7 @@
 
     .print-controls button {
       align-self: end;
-      min-height: 38px;
+      min-height: 44px;
       white-space: nowrap;
     }
 
@@ -280,7 +315,7 @@
       border: 1px solid var(--line-strong);
       border-radius: var(--radius);
       color: var(--text);
-      min-height: 38px;
+      min-height: 44px;
       padding: 8px 10px;
       width: 100%;
     }
@@ -330,6 +365,20 @@
       font-weight: 700;
     }
 
+    .btn-transfer {
+      background: #eef6ff;
+      border-color: #8bb9e8;
+      color: #195d9a;
+      font-weight: 700;
+    }
+
+    .btn-warning {
+      background: #fff7e8;
+      border-color: #d99a60;
+      color: #7b3f0f;
+      font-weight: 700;
+    }
+
     .btn-danger {
       background: #fff;
       border-color: #d8918c;
@@ -352,7 +401,7 @@
     }
 
     .toolbar-actions select {
-      min-height: 36px;
+      min-height: 44px;
       width: auto;
     }
 
@@ -362,7 +411,7 @@
       border-radius: var(--radius);
       cursor: pointer;
       display: inline-flex;
-      min-height: 36px;
+      min-height: 44px;
       padding: 0 12px;
       white-space: nowrap;
     }
@@ -523,7 +572,7 @@
 
     @media (max-width: 700px) {
       .app {
-        padding: 12px;
+        padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
       }
 
       .header {
@@ -776,13 +825,14 @@
   <main class="app">
     <header class="header">
       <div class="title-block">
-        <h1>潤滑油 在庫管理 <span class="demo-label">DEMO</span></h1>
+        <h1>潤滑油 在庫管理</h1>
         <p class="subtitle">localStorage保存・CSV入出力対応の軽量オフラインツール</p>
       </div>
       <div class="header-actions">
         <a class="nav-button" href="products.html">商品マスタを見る</a>
         <a class="nav-button" href="monthly.html">月次集計を見る</a>
-        <button type="button" class="nav-button export-button" id="headerExportButton">CSV出力</button>
+        <button type="button" class="nav-button backup-button" id="headerExportButton">バックアップ保存</button>
+        <button type="button" class="nav-button btn-transfer" id="headerTransferButton">iPhone転送CSV出力</button>
       </div>
     </header>
 
@@ -803,6 +853,20 @@
         <div class="label">最低在庫以下</div>
         <div class="value" id="lowCount">0 件</div>
       </div>
+    </section>
+
+    <section class="backup-note" aria-label="バックアップ情報">
+      <div><strong>最終バックアップ：</strong><span id="lastBackupAt">未保存</span></div>
+      <div><strong>実運用：</strong>Mac親機で入力・保存し、iPhone/iPadは閲覧更新用として使用します。</div>
+      <div class="operation-note">
+        <span class="note-item"><strong>backup：</strong>復旧・履歴保存用。日付付きCSVをMac側の <strong>backup</strong> フォルダへ保管してください。</span>
+        <span class="note-item"><strong>transfer：</strong>iPhone読込用。固定名 <strong>latest_stock.csv</strong> は最新状態のみを上書き運用します。</span>
+      </div>
+    </section>
+
+    <section class="safety-notice" aria-label="公開運用の注意">
+      <strong>公開運用の注意：</strong>
+      このツールはデータをGitHub上に保存しません。実データはCSV/JSONで手元保存し、ブラウザ端末内のlocalStorageは一時保存として扱ってください。CSV未読み込み時は空の状態で起動します。
     </section>
 
     <section class="print-controls" aria-label="月末印刷">
@@ -916,10 +980,18 @@
               <option value="append">追加</option>
               <option value="replace">上書き</option>
             </select>
-            <button type="button" id="exportButton" class="btn-accent">CSV出力</button>
+            <button type="button" id="exportButton" class="btn-accent">バックアップ保存</button>
+            <button type="button" id="transferButton" class="btn-transfer">iPhone転送CSV出力</button>
+            <button type="button" id="jsonExportButton">JSON出力</button>
+            <button type="button" id="sampleButton">サンプルデータ読込</button>
+            <button type="button" id="resetStorageButton" class="btn-warning">端末内データ初期化</button>
+            <label class="file-button">
+              JSON読込
+              <input id="jsonImportInput" type="file" accept=".json,application/json">
+            </label>
             <label class="file-button btn-accent">
-              デモCSV読込
-              <input id="demoCsvImportInput" type="file" accept=".csv,text/csv">
+              外部在庫CSV読込
+              <input id="externalCsvImportInput" type="file" accept=".csv,text/csv">
             </label>
             <label class="file-button">
               CSV読込
@@ -1002,9 +1074,65 @@
 
   <script>
     const STORAGE_KEY = "lubricantInventoryItems.v1";
+    const PRODUCT_STORAGE_KEY = "lubricantProductMaster.v1";
+    const AUTO_BACKUP_KEY = "lubricantInventoryAutoBackup.v1";
+    const BACKUP_META_KEY = "lubricantInventoryBackupMeta.v1";
+    const APP_BACKUP_VERSION = 1;
     const UNITS = ["ペール", "ドラム", "箱", "バラ"];
     const SUPPLIERS = ["仕入先A", "仕入先B", "仕入先C"];
-    const HEADERS = ["ID", "商品コード", "商品名", "粘度/規格", "仕入先", "現在庫", "最低在庫", "単位", "単価", "当月入荷", "入荷日", "当月出荷", "出荷日", "最終更新日", "メモ", "デモ参考金額"];
+    const HEADERS = ["ID", "商品コード", "商品名", "粘度/規格", "仕入先", "現在庫", "最低在庫", "単位", "単価", "当月入荷", "入荷日", "当月出荷", "出荷日", "最終更新日", "メモ", "参考金額"];
+    const STORAGE_KEYS_TO_RESET = [
+      STORAGE_KEY,
+      PRODUCT_STORAGE_KEY,
+      AUTO_BACKUP_KEY,
+      BACKUP_META_KEY,
+      "lubricantProductMasterAutoBackup.v1"
+    ];
+    const DEMO_ITEMS = [
+      {
+        name: "[DEMO] 作動油A",
+        spec: "ISO VG32",
+        supplier: "仕入先A",
+        stock: 12,
+        minStock: 5,
+        unit: "ペール",
+        price: 0,
+        monthlyIn: 3,
+        monthlyInDate: today(),
+        monthlyOut: 1,
+        monthlyOutDate: today(),
+        updatedAt: today(),
+        memo: "デモ用。本番データではありません。"
+      },
+      {
+        name: "[DEMO] ギヤ油B",
+        spec: "ISO VG150",
+        supplier: "仕入先B",
+        stock: 4,
+        minStock: 4,
+        unit: "ペール",
+        price: 0,
+        monthlyIn: 0,
+        monthlyOut: 2,
+        monthlyOutDate: today(),
+        updatedAt: today(),
+        memo: "デモ用。本番データではありません。"
+      },
+      {
+        name: "[DEMO] グリースC",
+        spec: "No.2",
+        supplier: "仕入先C",
+        stock: 8,
+        minStock: 3,
+        unit: "箱",
+        price: 0,
+        monthlyIn: 1,
+        monthlyInDate: today(),
+        monthlyOut: 0,
+        updatedAt: today(),
+        memo: "デモ用。本番データではありません。"
+      }
+    ];
 
     const els = {
       form: document.getElementById("itemForm"),
@@ -1034,6 +1162,7 @@
       totalIn: document.getElementById("totalIn"),
       totalOut: document.getElementById("totalOut"),
       lowCount: document.getElementById("lowCount"),
+      lastBackupAt: document.getElementById("lastBackupAt"),
       headerExportButton: document.getElementById("headerExportButton"),
       reportMonth: document.getElementById("reportMonth"),
       reportAdmin: document.getElementById("reportAdmin"),
@@ -1050,8 +1179,14 @@
       printAdminName: document.getElementById("printAdminName"),
       importMode: document.getElementById("importMode"),
       exportButton: document.getElementById("exportButton"),
+      transferButton: document.getElementById("transferButton"),
+      sampleButton: document.getElementById("sampleButton"),
+      resetStorageButton: document.getElementById("resetStorageButton"),
       importInput: document.getElementById("importInput"),
-      demoCsvImportInput: document.getElementById("demoCsvImportInput"),
+      jsonExportButton: document.getElementById("jsonExportButton"),
+      jsonImportInput: document.getElementById("jsonImportInput"),
+      externalCsvImportInput: document.getElementById("externalCsvImportInput"),
+      headerTransferButton: document.getElementById("headerTransferButton"),
       toast: document.getElementById("toast")
     };
 
@@ -1063,6 +1198,14 @@
 
     function compactDate() {
       return today().replace(/-/g, "");
+    }
+
+    function stockBackupFileName() {
+      return today() + "_stock.csv";
+    }
+
+    function stockTransferFileName() {
+      return "latest_stock.csv";
     }
 
     function currentMonth() {
@@ -1109,6 +1252,14 @@
       return parts.length === 3 ? `${parts[0]}/${parts[1]}/${parts[2]}` : source;
     }
 
+    function formatBackupDateTime(value) {
+      if (!value) return "未保存";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "未保存";
+      const pad = num => String(num).padStart(2, "0");
+      return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
     function formatMonthLabel(value) {
       const source = value || currentMonth();
       const parts = String(source).split("-");
@@ -1127,6 +1278,7 @@
     }
 
     function normalizeItem(raw) {
+      raw = raw && typeof raw === "object" ? raw : {};
       return {
         id: raw.id || uid(),
         productCode: String(raw.productCode || "").trim(),
@@ -1174,13 +1326,13 @@
       return [item.name, item.spec, item.supplier].map(value => String(value || "").trim().toLowerCase()).join("||");
     }
 
-    function demoCsvKey(item) {
+    function externalCsvKey(item) {
       const code = String(item.productCode || "").trim().toLowerCase();
       if (code) return "code:" + code;
-      return demoCsvFallbackKey(item);
+      return externalCsvFallbackKey(item);
     }
 
-    function demoCsvFallbackKey(item) {
+    function externalCsvFallbackKey(item) {
       return "name-unit:" + [item.name, item.unit].map(value => String(value || "").trim().toLowerCase()).join("||");
     }
 
@@ -1190,12 +1342,115 @@
         return Array.isArray(saved) ? saved.map(normalizeItem) : [];
       } catch (error) {
         console.warn("Failed to load inventory data:", error);
+        window.__inventoryLoadFailed = true;
         return [];
       }
     }
 
     function saveItems() {
+      createAutoBackup("save");
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function clearLocalData() {
+      const message = [
+        "端末内の在庫データ、商品マスタ、自動バックアップ、最終バックアップ表示を削除します。",
+        "GitHub上のファイルやCSVバックアップは削除されません。",
+        "CSV/JSONバックアップ済みの場合だけ実行してください。"
+      ].join("\n");
+      if (!confirm(message + "\n\n初期化しますか？")) return;
+      if (!confirm("最終確認です。この端末のlocalStorageを初期化します。実行しますか？")) return;
+      try {
+        STORAGE_KEYS_TO_RESET.forEach(key => localStorage.removeItem(key));
+        items = [];
+        resetForm();
+        render();
+        renderPrintReport();
+        updateBackupDisplay();
+        showToast("端末内データを初期化しました");
+      } catch (error) {
+        alert("端末内データの初期化に失敗しました: " + error.message);
+      }
+    }
+
+    function loadDemoData() {
+      if (!confirm("デモ用サンプルデータを読み込みます。現在の端末内在庫データは自動バックアップ後にデモデータへ置き換わります。実行しますか？")) return;
+      createAutoBackup("before-demo-load");
+      items = DEMO_ITEMS.map(item => normalizeItem({
+        ...item,
+        id: uid()
+      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      resetForm();
+      render();
+      renderPrintReport();
+      showToast("デモ用サンプルデータを読み込みました");
+    }
+
+    function createAutoBackup(reason) {
+      try {
+        const backups = JSON.parse(localStorage.getItem(AUTO_BACKUP_KEY) || "[]");
+        const next = Array.isArray(backups) ? backups : [];
+        next.unshift({
+          version: APP_BACKUP_VERSION,
+          reason,
+          createdAt: new Date().toISOString(),
+          items
+        });
+        localStorage.setItem(AUTO_BACKUP_KEY, JSON.stringify(next.slice(0, 5)));
+      } catch (error) {
+        console.warn("Failed to create auto backup:", error);
+      }
+    }
+
+    function exportJsonBackup() {
+      const payload = {
+        app: "lubricant-inventory",
+        version: APP_BACKUP_VERSION,
+        exportedAt: new Date().toISOString(),
+        storageKeys: {
+          inventory: STORAGE_KEY,
+          productMaster: PRODUCT_STORAGE_KEY
+        },
+        inventoryItems: items,
+        productMaster: JSON.parse(localStorage.getItem(PRODUCT_STORAGE_KEY) || "[]")
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "inventory_backup_" + compactDate() + ".json";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast("JSONバックアップを出力しました");
+    }
+
+    function importJsonBackup(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(String(reader.result || "{}"));
+          const importedItems = Array.isArray(data.inventoryItems) ? data.inventoryItems.map(normalizeItem) : null;
+          const importedProducts = Array.isArray(data.productMaster) ? data.productMaster : null;
+          if (!importedItems) {
+            alert("JSON内に inventoryItems が見つかりません。");
+            return;
+          }
+          if (!confirm("JSONバックアップを読み込みます。現在の在庫データは自動バックアップ後に上書きされます。実行しますか？")) return;
+          createAutoBackup("before-json-import");
+          items = importedItems;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+          if (importedProducts) localStorage.setItem(PRODUCT_STORAGE_KEY, JSON.stringify(importedProducts));
+          render();
+          renderPrintReport();
+          showToast("JSONバックアップを読み込みました");
+        } catch (error) {
+          alert("JSONを読み込めませんでした: " + error.message);
+        }
+      };
+      reader.readAsText(file, "utf-8");
     }
 
     function showToast(message) {
@@ -1203,6 +1458,28 @@
       els.toast.classList.add("show");
       window.clearTimeout(showToast.timer);
       showToast.timer = window.setTimeout(() => els.toast.classList.remove("show"), 2200);
+    }
+
+    function loadBackupMeta() {
+      try {
+        return JSON.parse(localStorage.getItem(BACKUP_META_KEY) || "{}");
+      } catch (error) {
+        console.warn("Failed to load backup metadata:", error);
+        return {};
+      }
+    }
+
+    function updateBackupDisplay() {
+      const meta = loadBackupMeta();
+      els.lastBackupAt.textContent = formatBackupDateTime(meta.lastBackupAt);
+    }
+
+    function markBackupSaved(fileName) {
+      localStorage.setItem(BACKUP_META_KEY, JSON.stringify({
+        lastBackupAt: new Date().toISOString(),
+        lastBackupFile: fileName
+      }));
+      updateBackupDisplay();
     }
 
     function filteredItems() {
@@ -1343,7 +1620,8 @@
     function deleteItem(id) {
       const item = items.find(entry => entry.id === id);
       if (!item) return;
-      if (!confirm(`「${item.name || "名称未入力"}」を削除しますか？`)) return;
+      if (!confirm(`「${item.name || "名称未入力"}」を削除しますか？\n削除前に自動バックアップを作成します。`)) return;
+      createAutoBackup("before-delete");
       items = items.filter(entry => entry.id !== id);
       if (els.editingId.value === id) resetForm();
       saveItems();
@@ -1413,7 +1691,9 @@
       return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
     }
 
-    function exportCsv() {
+    // backup: 復旧・履歴保存用。出力された日付付きCSVをFinder上の backup フォルダへ保管する。
+    // transfer: iPhone閲覧更新用。latest_stock.csv を最新状態として上書き運用する。
+    function buildInventoryCsv() {
       const lines = [HEADERS.map(csvEscape).join(",")];
       for (const item of items) {
         lines.push([
@@ -1435,17 +1715,32 @@
           item.referenceSubtotal || ""
         ].map(csvEscape).join(","));
       }
+      return "\ufeff" + lines.join("\r\n");
+    }
 
-      const blob = new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    function downloadInventoryCsv(fileName) {
+      const blob = new Blob([buildInventoryCsv()], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "demo_inventory_" + compactDate() + ".csv";
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      showToast("CSVを出力しました");
+    }
+
+    function exportCsv() {
+      const fileName = stockBackupFileName();
+      downloadInventoryCsv(fileName);
+      markBackupSaved(fileName);
+      showToast("バックアップCSVを保存しました: " + fileName);
+    }
+
+    function exportTransferCsv() {
+      const fileName = stockTransferFileName();
+      downloadInventoryCsv(fileName);
+      showToast("iPhone転送CSVを出力しました: " + fileName);
     }
 
     function parseCsv(text) {
@@ -1516,11 +1811,25 @@
       return integerValue(cleaned);
     }
 
-    function demoCsvImportKey(item) {
-      return demoCsvKey(item);
+    function headerHasAny(header, names) {
+      return headerIndex(header, names) >= 0;
     }
 
-    function importDemoCsvCsv(file) {
+    function cellByAliases(row, header, fallbackHeaders, names, hasHeader) {
+      const index = hasHeader ? headerIndex(header, names) : headerIndex(fallbackHeaders, names);
+      return index >= 0 ? row[index] : "";
+    }
+
+    function numberByAliases(row, header, fallbackHeaders, names, hasHeader, rowNumber, label, errors) {
+      const index = hasHeader ? headerIndex(header, names) : headerIndex(fallbackHeaders, names);
+      return numericCell(row, index, rowNumber, label, errors);
+    }
+
+    function externalCsvImportKey(item) {
+      return externalCsvKey(item);
+    }
+
+    function importExternalCsvCsv(file) {
       const reader = new FileReader();
       reader.onload = () => {
         const text = decodeCsvBuffer(reader.result).replace(/^\ufeff/, "");
@@ -1534,7 +1843,7 @@
         const required = ["商品名", "単位", "残高数量", "残高単価", "受入数量", "払出数量"];
         const missing = required.filter(name => !header.includes(name));
         if (missing.length) {
-          alert("デモCSVの必須列が見つかりません。\n不足列: " + missing.join("、"));
+          alert("外部在庫CSVの必須列が見つかりません。\n不足列: " + missing.join("、"));
           return;
         }
 
@@ -1545,7 +1854,7 @@
           unit: headerIndex(header, ["単位"]),
           stock: headerIndex(header, ["残高数量"]),
           price: headerIndex(header, ["残高単価"]),
-          referenceSubtotal: headerIndex(header, ["参考金額"]),
+          referenceSubtotal: headerIndex(header, ["残高金額"]),
           monthlyIn: headerIndex(header, ["受入数量"]),
           monthlyOut: headerIndex(header, ["払出数量"])
         };
@@ -1570,12 +1879,12 @@
             monthlyOut: numericCell(row, indexes.monthlyOut, rowNumber, "払出数量", errors),
             updatedAt: today(),
             memo: "",
-            referenceSubtotal: indexes.referenceSubtotal >= 0 ? numericCell(row, indexes.referenceSubtotal, rowNumber, "参考金額", errors) : 0
+            referenceSubtotal: indexes.referenceSubtotal >= 0 ? numericCell(row, indexes.referenceSubtotal, rowNumber, "残高金額", errors) : 0
           }));
         });
 
         if (errors.length) {
-          alert("デモCSVの数値変換でエラーがあります。\n" + errors.slice(0, 20).join("\n") + (errors.length > 20 ? "\nほか " + (errors.length - 20) + " 件" : ""));
+          alert("外部在庫CSVの数値変換でエラーがあります。\n" + errors.slice(0, 20).join("\n") + (errors.length > 20 ? "\nほか " + (errors.length - 20) + " 件" : ""));
           return;
         }
 
@@ -1584,21 +1893,22 @@
           return;
         }
 
+        createAutoBackup("before-salesking-import");
         const mode = els.importMode.value;
         if (mode === "replace") {
           items = imported;
-          showToast(imported.length + "件をデモCSVで上書きしました");
+          showToast(imported.length + "件を外部在庫CSVで上書きしました");
         } else {
           const byKey = new Set();
           for (const item of items) {
-            byKey.add(demoCsvImportKey(item));
-            byKey.add(demoCsvFallbackKey(item));
+            byKey.add(externalCsvImportKey(item));
+            byKey.add(externalCsvFallbackKey(item));
           }
           let added = 0;
           let skipped = 0;
           for (const item of imported) {
-            const key = demoCsvImportKey(item);
-            const fallbackKey = demoCsvFallbackKey(item);
+            const key = externalCsvImportKey(item);
+            const fallbackKey = externalCsvFallbackKey(item);
             if (byKey.has(key) || byKey.has(fallbackKey)) {
               skipped++;
             } else {
@@ -1608,7 +1918,7 @@
               added++;
             }
           }
-          showToast("デモCSV: " + added + "件追加、重複" + skipped + "件をスキップしました");
+          showToast("外部在庫CSV: " + added + "件追加、重複" + skipped + "件をスキップしました");
         }
 
         saveItems();
@@ -1621,76 +1931,94 @@
     function importCsv(file) {
       const reader = new FileReader();
       reader.onload = () => {
-        const text = String(reader.result || "").replace(/^\ufeff/, "");
-        const rows = parseCsv(text).filter(row => row.some(cell => String(cell).trim()));
-        if (!rows.length) {
-          showToast("読み込める行がありません");
-          return;
-        }
-
-        const header = rows[0].map(value => value.trim());
-        const hasHeader = header.includes("商品名") && header.includes("現在庫");
-        const dataRows = hasHeader ? rows.slice(1) : rows;
-        const legacyHeaders = ["ID", "商品名", "粘度/規格", "仕入先", "現在庫", "最低在庫", "単位", "単価", "当月入荷", "入荷日", "当月出荷", "出荷日", "最終更新日", "メモ"];
-        const fallbackHeaders = rows[0].length === HEADERS.length ? HEADERS
-          : rows[0].length === HEADERS.length - 1 ? HEADERS.slice(1)
-          : rows[0].length === legacyHeaders.length ? legacyHeaders
-          : rows[0].length === legacyHeaders.length - 1 ? legacyHeaders.slice(1)
-          : HEADERS.slice(1);
-        const indexOf = name => hasHeader ? header.indexOf(name) : fallbackHeaders.indexOf(name);
-        const cell = (row, name) => {
-          const index = indexOf(name);
-          return index >= 0 ? row[index] : "";
-        };
-
-        const imported = dataRows.map(row => normalizeItem({
-          id: cell(row, "ID"),
-          productCode: cell(row, "商品コード"),
-          name: cell(row, "商品名"),
-          spec: cell(row, "粘度/規格"),
-          supplier: cell(row, "仕入先"),
-          stock: cell(row, "現在庫"),
-          minStock: cell(row, "最低在庫"),
-          unit: cell(row, "単位"),
-          price: cell(row, "単価"),
-          monthlyIn: cell(row, "当月入荷"),
-          monthlyInDate: cell(row, "入荷日"),
-          monthlyOut: cell(row, "当月出荷"),
-          monthlyOutDate: cell(row, "出荷日"),
-          updatedAt: cell(row, "最終更新日"),
-          memo: cell(row, "メモ"),
-          referenceSubtotal: cell(row, "デモ参考金額")
-        })).filter(item => item.name || item.spec || item.supplier);
-
-        if (!imported.length) {
-          showToast("有効な商品データがありません");
-          return;
-        }
-
-        const mode = els.importMode.value;
-        if (mode === "replace") {
-          items = imported;
-        } else {
-          const byKey = new Map(items.map((item, index) => [duplicateKey(item), index]));
-          let added = 0;
-          let skipped = 0;
-          for (const item of imported) {
-            const key = duplicateKey(item);
-            if (byKey.has(key)) {
-              skipped++;
-            } else {
-              items.push(item);
-              byKey.set(key, items.length - 1);
-              added++;
-            }
+        try {
+          const text = decodeCsvBuffer(reader.result).replace(/^\ufeff/, "");
+          const rows = parseCsv(text).filter(row => row.some(cell => String(cell).trim()));
+          if (!rows.length) {
+            showToast("読み込める行がありません");
+            return;
           }
-          showToast(added + "件追加、重複" + skipped + "件をスキップしました");
+
+          const header = rows[0].map(value => String(value || "").trim());
+          const stockAliases = ["現在庫", "残高数量", "数量", "在庫数量", "在庫数"];
+          const hasHeader = header.includes("商品名") && (
+            headerHasAny(header, stockAliases) ||
+            headerHasAny(header, ["単位", "仕入先", "単価", "当月入荷", "入荷数量", "当月出荷", "出荷数量"])
+          );
+          const dataRows = hasHeader ? rows.slice(1) : rows;
+          const legacyHeaders = ["ID", "商品名", "粘度/規格", "仕入先", "現在庫", "最低在庫", "単位", "単価", "当月入荷", "入荷日", "当月出荷", "出荷日", "最終更新日", "メモ"];
+          const fallbackHeaders = rows[0].length === HEADERS.length ? HEADERS
+            : rows[0].length === HEADERS.length - 1 ? HEADERS.slice(1)
+            : rows[0].length === legacyHeaders.length ? legacyHeaders
+            : rows[0].length === legacyHeaders.length - 1 ? legacyHeaders.slice(1)
+            : HEADERS.slice(1);
+          const cell = (row, names) => cellByAliases(row, header, fallbackHeaders, Array.isArray(names) ? names : [names], hasHeader);
+          const errors = [];
+
+          const imported = [];
+          dataRows.forEach((row, rowIndex) => {
+            const rowNumber = hasHeader ? rowIndex + 2 : rowIndex + 1;
+            const item = normalizeItem({
+              id: cell(row, "ID"),
+              productCode: cell(row, ["商品コード", "品番", "コード"]),
+              name: cell(row, "商品名"),
+              spec: cell(row, ["粘度/規格", "規格", "粘度"]),
+              supplier: cell(row, ["仕入先", "仕入先名"]),
+              stock: numberByAliases(row, header, fallbackHeaders, stockAliases, hasHeader, rowNumber, "現在庫/残高数量", errors),
+              minStock: numberByAliases(row, header, fallbackHeaders, ["最低在庫", "最低在庫数"], hasHeader, rowNumber, "最低在庫", errors),
+              unit: cell(row, "単位"),
+              price: numberByAliases(row, header, fallbackHeaders, ["単価", "残高単価"], hasHeader, rowNumber, "単価", errors),
+              monthlyIn: numberByAliases(row, header, fallbackHeaders, ["当月入荷", "入荷数量", "受入数量"], hasHeader, rowNumber, "当月入荷/入荷数量", errors),
+              monthlyInDate: cell(row, ["入荷日", "入庫日"]),
+              monthlyOut: numberByAliases(row, header, fallbackHeaders, ["当月出荷", "出荷数量", "払出数量"], hasHeader, rowNumber, "当月出荷/出荷数量", errors),
+              monthlyOutDate: cell(row, ["出荷日", "出庫日"]),
+              updatedAt: cell(row, ["最終更新日", "更新日"]),
+              memo: cell(row, ["メモ", "備考"]),
+              referenceSubtotal: numberByAliases(row, header, fallbackHeaders, ["参考金額", "残高金額", "小計"], hasHeader, rowNumber, "残高金額/小計", errors)
+            });
+            if (item.name || item.spec || item.supplier) imported.push(item);
+          });
+
+          if (errors.length) {
+            alert("CSVの数値変換でエラーがあります。\n" + errors.slice(0, 20).join("\n") + (errors.length > 20 ? "\nほか " + (errors.length - 20) + " 件" : ""));
+            return;
+          }
+
+          if (!imported.length) {
+            showToast("有効な商品データがありません");
+            return;
+          }
+
+          createAutoBackup("before-csv-import");
+          const mode = els.importMode.value;
+          if (mode === "replace") {
+            items = imported;
+          } else {
+            const byKey = new Map(items.map((item, index) => [duplicateKey(item), index]));
+            let added = 0;
+            let skipped = 0;
+            for (const item of imported) {
+              const key = duplicateKey(item);
+              if (byKey.has(key)) {
+                skipped++;
+              } else {
+                items.push(item);
+                byKey.set(key, items.length - 1);
+                added++;
+              }
+            }
+            showToast(added + "件追加、重複" + skipped + "件をスキップしました");
+          }
+          saveItems();
+          render();
+          renderPrintReport();
+          if (mode === "replace") showToast(imported.length + "件で上書きしました");
+        } catch (error) {
+          alert("CSVを読み込めませんでした: " + error.message);
         }
-        saveItems();
-        render();
-        if (mode === "replace") showToast(imported.length + "件で上書きしました");
       };
-      reader.readAsText(file, "utf-8");
+      reader.onerror = () => alert("CSVファイルの読み込みに失敗しました。");
+      reader.readAsArrayBuffer(file);
     }
 
     els.form.addEventListener("submit", event => {
@@ -1726,16 +2054,26 @@
     });
     els.search.addEventListener("input", render);
     els.headerExportButton.addEventListener("click", exportCsv);
+    els.headerTransferButton.addEventListener("click", exportTransferCsv);
     els.printReportButton.addEventListener("click", printReport);
     els.exportButton.addEventListener("click", exportCsv);
+    els.transferButton.addEventListener("click", exportTransferCsv);
+    els.sampleButton.addEventListener("click", loadDemoData);
+    els.resetStorageButton.addEventListener("click", clearLocalData);
+    els.jsonExportButton.addEventListener("click", exportJsonBackup);
+    els.jsonImportInput.addEventListener("change", event => {
+      const file = event.target.files && event.target.files[0];
+      if (file) importJsonBackup(file);
+      event.target.value = "";
+    });
     els.importInput.addEventListener("change", event => {
       const file = event.target.files && event.target.files[0];
       if (file) importCsv(file);
       event.target.value = "";
     });
-    els.demoCsvImportInput.addEventListener("change", event => {
+    els.externalCsvImportInput.addEventListener("change", event => {
       const file = event.target.files && event.target.files[0];
-      if (file) importDemoCsvCsv(file);
+      if (file) importExternalCsvCsv(file);
       event.target.value = "";
     });
 
@@ -1764,6 +2102,11 @@
     els.reportMonth.value = currentMonth();
     render();
     renderPrintReport();
+    updateBackupDisplay();
+    if (window.__inventoryLoadFailed) {
+      showToast("端末内データを読み込めませんでした。空の状態で起動しました。必要に応じて初期化してください。");
+    }
+
   </script>
 </body>
 </html>

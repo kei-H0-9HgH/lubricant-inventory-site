@@ -5,10 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="潤滑油商品DEMO">
+  <meta name="apple-mobile-web-app-title" content="潤滑油商品">
   <meta name="theme-color" content="#f6f7f2">
-  <link rel="apple-touch-icon" href="icon.png">
-  <title>潤滑油 商品マスタ DEMO</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <script src="app-version.js"></script>
+  <script src="pwa-update.js" defer></script>
+  <title>潤滑油 商品マスタ</title>
   <style>
     :root {
       --bg: #f6f7f2;
@@ -56,7 +60,7 @@
       background: #fff;
       color: var(--text);
       cursor: pointer;
-      min-height: 36px;
+      min-height: 44px;
       padding: 0 12px;
       transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
@@ -75,7 +79,7 @@
 
     .app {
       min-height: 100vh;
-      padding: 18px;
+      padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
     }
 
     .header {
@@ -96,19 +100,6 @@
       font-weight: 700;
       line-height: 1.3;
       margin: 0;
-    }
-
-    .demo-label {
-      background: var(--accent);
-      border-radius: 4px;
-      color: #fff;
-      display: inline-block;
-      font-size: 0.78em;
-      font-weight: 800;
-      letter-spacing: 0;
-      margin-left: 6px;
-      padding: 2px 8px;
-      vertical-align: 0.08em;
     }
 
     .subtitle {
@@ -133,7 +124,7 @@
       color: #fff;
       display: inline-flex;
       font-weight: 700;
-      min-height: 36px;
+      min-height: 44px;
       padding: 0 12px;
       text-decoration: none;
       white-space: nowrap;
@@ -233,7 +224,7 @@
       border-radius: var(--radius);
       cursor: pointer;
       display: inline-flex;
-      min-height: 36px;
+      min-height: 44px;
       padding: 0 12px;
       white-space: nowrap;
     }
@@ -301,7 +292,7 @@
       border: 1px solid var(--line-strong);
       border-radius: var(--radius);
       color: var(--text);
-      min-height: 34px;
+      min-height: 44px;
       padding: 6px 8px;
       width: 100%;
     }
@@ -311,7 +302,7 @@
     }
 
     input[type="number"] {
-      min-height: 38px;
+      min-height: 44px;
       text-align: center;
     }
 
@@ -356,7 +347,7 @@
 
     @media (max-width: 700px) {
       .app {
-        padding: 12px;
+        padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
       }
 
       .header {
@@ -398,7 +389,7 @@
   <main class="app">
     <header class="header">
       <div class="title-block">
-        <h1>潤滑油 商品マスタ <span class="demo-label">DEMO</span></h1>
+        <h1>潤滑油 商品マスタ</h1>
         <p class="subtitle">在庫登録前の商品候補を100件まで編集・保存</p>
       </div>
       <div class="header-actions">
@@ -461,6 +452,7 @@
   <script>
     const PRODUCT_STORAGE_KEY = "lubricantProductMaster.v1";
     const INVENTORY_STORAGE_KEY = "lubricantInventoryItems.v1";
+    const PRODUCT_AUTO_BACKUP_KEY = "lubricantProductMasterAutoBackup.v1";
     const MAX_ROWS = 100;
     const UNITS = ["ペール", "ドラム", "箱", "バラ"];
     const SUPPLIERS = ["仕入先A", "仕入先B", "仕入先C"];
@@ -503,6 +495,7 @@
     }
 
     function normalizeProduct(raw) {
+      raw = raw && typeof raw === "object" ? raw : {};
       return {
         name: String(raw.name || "").trim(),
         spec: String(raw.spec || "").trim(),
@@ -556,8 +549,25 @@
       localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(items));
     }
 
+    function createProductAutoBackup(reason) {
+      try {
+        const backups = JSON.parse(localStorage.getItem(PRODUCT_AUTO_BACKUP_KEY) || "[]");
+        const next = Array.isArray(backups) ? backups : [];
+        next.unshift({
+          version: 1,
+          reason,
+          createdAt: new Date().toISOString(),
+          products: collectRows().filter(product => product.name)
+        });
+        localStorage.setItem(PRODUCT_AUTO_BACKUP_KEY, JSON.stringify(next.slice(0, 5)));
+      } catch (error) {
+        console.warn("Failed to create product master auto backup:", error);
+      }
+    }
+
     function saveProducts() {
       const products = collectRows().filter(product => product.name);
+      createProductAutoBackup("save");
       localStorage.setItem(PRODUCT_STORAGE_KEY, JSON.stringify(products.slice(0, MAX_ROWS)));
       rows = padRows(products);
       render();
@@ -840,6 +850,7 @@
     });
 
     render();
+
   </script>
 </body>
 </html>
