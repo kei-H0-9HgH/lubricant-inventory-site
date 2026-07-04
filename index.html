@@ -501,6 +501,65 @@
       text-align: center;
     }
 
+    .field-operation {
+      border-top: 1px solid #eef1eb;
+      display: none;
+      margin-top: 10px;
+      padding-top: 10px;
+    }
+
+    .field-operation-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .field-quantity {
+      align-items: center;
+      display: grid;
+      grid-template-columns: 56px minmax(72px, 1fr) 56px;
+      gap: 8px;
+      margin-bottom: 10px;
+      max-width: 260px;
+    }
+
+    .field-quantity button,
+    .field-flow button {
+      font-weight: 800;
+      min-height: 56px;
+    }
+
+    .field-quantity button {
+      font-size: 1.45rem;
+      padding: 0;
+    }
+
+    .field-quantity input {
+      font-size: 1.25rem;
+      font-weight: 800;
+      min-height: 56px;
+      text-align: center;
+    }
+
+    .field-flow {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .btn-inbound {
+      background: #eaf6ee;
+      border-color: #9ac7a7;
+      color: #1f6b3a;
+    }
+
+    .btn-outbound {
+      background: #fff1ec;
+      border-color: #e0a28d;
+      color: #9b3f1e;
+    }
+
     .badge {
       border-radius: 999px;
       display: inline-flex;
@@ -689,9 +748,21 @@
         border-bottom: 0;
       }
 
+      td[data-label="単価"],
+      td[data-label="小計"],
+      td[data-label="入荷日"],
+      td[data-label="出荷日"],
+      td[data-label="最終更新日"] {
+        display: none;
+      }
+
       .stock-control {
         grid-template-columns: 46px minmax(76px, 1fr) 46px;
         max-width: 230px;
+      }
+
+      .field-operation {
+        display: block;
       }
 
       .row-actions {
@@ -826,7 +897,7 @@
     <header class="header">
       <div class="title-block">
         <h1>潤滑油 在庫管理</h1>
-        <p class="subtitle">localStorage保存・CSV入出力対応の軽量オフラインツール</p>
+        <p class="subtitle">Ver 1.1 現場入力検証 / localStorage保存・CSV入出力対応</p>
       </div>
       <div class="header-actions">
         <a class="nav-button" href="products.html">商品マスタを見る</a>
@@ -1077,6 +1148,7 @@
     const PRODUCT_STORAGE_KEY = "lubricantProductMaster.v1";
     const AUTO_BACKUP_KEY = "lubricantInventoryAutoBackup.v1";
     const BACKUP_META_KEY = "lubricantInventoryBackupMeta.v1";
+    const UI_SETTINGS_KEY = "lubricantInventoryUiSettings.v1";
     const APP_BACKUP_VERSION = 1;
     const UNITS = ["ペール", "ドラム", "箱", "バラ"];
     const SUPPLIERS = ["仕入先A", "仕入先B", "仕入先C"];
@@ -1191,6 +1263,7 @@
     };
 
     let items = loadItems();
+    let uiSettings = loadUiSettings();
 
     function today() {
       return new Date().toISOString().slice(0, 10);
@@ -1223,6 +1296,10 @@
 
     function integerValue(value) {
       return Math.max(0, Math.trunc(numberValue(value)));
+    }
+
+    function fieldQuantityValue(value) {
+      return Math.max(1, integerValue(value) || 1);
     }
 
     function sanitizeIntegerInput(input) {
@@ -1345,6 +1422,34 @@
         window.__inventoryLoadFailed = true;
         return [];
       }
+    }
+
+    function loadUiSettings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(UI_SETTINGS_KEY) || "{}");
+        return {
+          lastQuantity: fieldQuantityValue(saved.lastQuantity || 1)
+        };
+      } catch (error) {
+        console.warn("Failed to load UI settings:", error);
+        return { lastQuantity: 1 };
+      }
+    }
+
+    function saveUiSettings() {
+      try {
+        localStorage.setItem(UI_SETTINGS_KEY, JSON.stringify({
+          lastQuantity: fieldQuantityValue(uiSettings.lastQuantity)
+        }));
+      } catch (error) {
+        console.warn("Failed to save UI settings:", error);
+      }
+    }
+
+    function setFieldQuantity(nextQuantity) {
+      uiSettings.lastQuantity = fieldQuantityValue(nextQuantity);
+      saveUiSettings();
+      render();
     }
 
     function saveItems() {
@@ -1510,6 +1615,7 @@
         const isLow = item.stock <= item.minStock;
         if (isLow) tr.classList.add("low");
         const subtotal = item.stock * item.price;
+        const fieldQuantity = fieldQuantityValue(uiSettings.lastQuantity);
 
         tr.innerHTML = `
           <td class="name-cell">
@@ -1524,6 +1630,18 @@
               <button type="button" data-action="decrease" data-id="${item.id}" aria-label="在庫を減らす">−</button>
               <input type="number" min="0" step="1" inputmode="numeric" pattern="[0-9]*" value="${item.stock}" data-action="stock-input" data-id="${item.id}" aria-label="現在庫">
               <button type="button" data-action="increase" data-id="${item.id}" aria-label="在庫を増やす">＋</button>
+            </div>
+            <div class="field-operation" aria-label="現場入出庫">
+              <div class="field-operation-label">数量</div>
+              <div class="field-quantity">
+                <button type="button" data-action="field-quantity-decrease" data-id="${item.id}" aria-label="記録数量を減らす">−</button>
+                <input type="number" min="1" step="1" inputmode="numeric" pattern="[0-9]*" value="${fieldQuantity}" data-action="field-quantity-input" data-id="${item.id}" aria-label="記録数量">
+                <button type="button" data-action="field-quantity-increase" data-id="${item.id}" aria-label="記録数量を増やす">＋</button>
+              </div>
+              <div class="field-flow">
+                <button type="button" class="btn-inbound" data-action="quick-in" data-id="${item.id}">入庫</button>
+                <button type="button" class="btn-outbound" data-action="quick-out" data-id="${item.id}">出庫</button>
+              </div>
             </div>
           </td>
           <td data-label="最低" class="number">${formatQuantity(item.minStock)}</td>
@@ -1636,6 +1754,29 @@
       item.updatedAt = today();
       saveItems();
       render();
+    }
+
+    function recordFieldMovement(id, type) {
+      const item = items.find(entry => entry.id === id);
+      if (!item) return;
+      const quantity = fieldQuantityValue(uiSettings.lastQuantity);
+      const currentDate = today();
+      if (type === "in") {
+        item.stock = integerValue(item.stock + quantity);
+        item.monthlyIn = integerValue(item.monthlyIn + quantity);
+        item.monthlyInDate = currentDate;
+        showToast("入庫 +" + formatQuantity(quantity) + " / 現在庫 " + formatQuantity(item.stock));
+      }
+      if (type === "out") {
+        item.stock = integerValue(item.stock - quantity);
+        item.monthlyOut = integerValue(item.monthlyOut + quantity);
+        item.monthlyOutDate = currentDate;
+        showToast("出庫 -" + formatQuantity(quantity) + " / 現在庫 " + formatQuantity(item.stock));
+      }
+      item.updatedAt = currentDate;
+      saveItems();
+      render();
+      renderPrintReport();
     }
 
     function renderPrintReport() {
@@ -2086,6 +2227,10 @@
 
       if (target.dataset.action === "increase") updateStock(id, item.stock + 1);
       if (target.dataset.action === "decrease") updateStock(id, item.stock - 1);
+      if (target.dataset.action === "field-quantity-increase") setFieldQuantity(uiSettings.lastQuantity + 1);
+      if (target.dataset.action === "field-quantity-decrease") setFieldQuantity(uiSettings.lastQuantity - 1);
+      if (target.dataset.action === "quick-in") recordFieldMovement(id, "in");
+      if (target.dataset.action === "quick-out") recordFieldMovement(id, "out");
       if (target.dataset.action === "edit") editItem(id);
       if (target.dataset.action === "delete") deleteItem(id);
     });
@@ -2095,6 +2240,10 @@
       if (target.dataset.action === "stock-input") {
         sanitizeIntegerInput(target);
         updateStock(target.dataset.id, target.value);
+      }
+      if (target.dataset.action === "field-quantity-input") {
+        sanitizeIntegerInput(target);
+        setFieldQuantity(target.value);
       }
     });
 
