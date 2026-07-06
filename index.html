@@ -535,6 +535,15 @@
       overflow-wrap: anywhere;
     }
 
+    .mobile-stock-summary,
+    .mobile-value {
+      display: none;
+    }
+
+    .unit-group-row {
+      display: none;
+    }
+
     .money,
     .number {
       font-variant-numeric: tabular-nums;
@@ -784,6 +793,28 @@
         border-color: #e3aaa5;
       }
 
+      .unit-group-row {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        display: block;
+        overflow: visible;
+      }
+
+      .unit-group-cell {
+        background: transparent;
+        border: 0;
+        color: var(--primary-dark);
+        display: block;
+        font-size: 0.92rem;
+        font-weight: 800;
+        padding: 4px 2px 0;
+      }
+
+      .unit-group-cell::before {
+        content: none;
+      }
+
       td {
         align-items: start;
         border-bottom: 1px solid #eef1eb;
@@ -807,6 +838,75 @@
 
       td.name-cell::before {
         content: none;
+      }
+
+      .mobile-stock-summary,
+      .mobile-value {
+        background: #f7faf4;
+        border: 1px solid #e1e7dc;
+        border-radius: var(--radius);
+        display: grid;
+        gap: 5px;
+        margin-top: 8px;
+        padding: 8px 10px;
+      }
+
+      .mobile-stock-summary {
+        background: #eef8f1;
+        border-color: #b8d8c1;
+      }
+
+      .mobile-stock-label {
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 800;
+      }
+
+      .mobile-stock-line {
+        align-items: baseline;
+        display: flex;
+        gap: 8px;
+      }
+
+      .mobile-stock-amount {
+        color: var(--primary-dark);
+        font-size: 2rem;
+        font-variant-numeric: tabular-nums;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .mobile-stock-unit {
+        color: var(--text);
+        font-size: 1rem;
+        font-weight: 800;
+      }
+
+      td.name-cell .mobile-value {
+        display: grid;
+      }
+
+      td.name-cell .mobile-stock-summary {
+        display: grid;
+      }
+
+      .mobile-value-row {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .mobile-value-label {
+        color: var(--muted);
+        font-size: 0.78rem;
+        font-weight: 700;
+      }
+
+      .mobile-value-amount {
+        font-variant-numeric: tabular-nums;
+        font-weight: 800;
+        white-space: nowrap;
       }
 
       td:last-child {
@@ -962,7 +1062,7 @@
     <header class="header">
       <div class="title-block">
         <h1>潤滑油 在庫管理</h1>
-        <p class="subtitle">Ver 1.2 現場入力検証 / localStorage保存・CSV入出力対応</p>
+        <p class="subtitle">Ver 1.2.2 現場入力検証 / localStorage保存・CSV入出力対応</p>
       </div>
       <div class="header-actions">
         <span class="mode-badge demo" id="modeBadge" aria-live="polite">🟡 DEMO</span>
@@ -1078,7 +1178,7 @@
             </div>
             <div class="field">
               <label for="price">単価</label>
-              <input id="price" type="number" step="1" min="0" inputmode="numeric" pattern="[0-9]*" value="0">
+              <input id="price" type="number" step="100" min="0" inputmode="numeric" pattern="[0-9]*" value="0">
             </div>
           </div>
           <div class="field-row">
@@ -1731,12 +1831,25 @@
       els.itemsBody.innerHTML = "";
       els.emptyState.hidden = rows.length !== 0;
 
-      for (const item of rows) {
+      const visibleUnits = new Set(rows.map(item => item.unit));
+      UNITS.forEach((unit, unitIndex) => {
+        if (!visibleUnits.has(unit)) return;
+        const groupRow = document.createElement("tr");
+        groupRow.className = "unit-group-row";
+        groupRow.style.order = String(unitIndex * 10000);
+        groupRow.innerHTML = `<td class="unit-group-cell" colspan="13">${unit}</td>`;
+        els.itemsBody.appendChild(groupRow);
+      });
+
+      rows.forEach((item, rowIndex) => {
         const tr = document.createElement("tr");
         const isLow = item.stock <= item.minStock;
         if (isLow) tr.classList.add("low");
         const subtotal = item.stock * item.price;
         const fieldQuantity = fieldQuantityValue(uiSettings.lastQuantity);
+        const unitIndex = UNITS.indexOf(item.unit);
+        const unitOrder = unitIndex >= 0 ? unitIndex : UNITS.length;
+        tr.style.order = String(unitOrder * 10000 + rowIndex + 1);
 
         tr.innerHTML = `
           <td class="name-cell">
@@ -1744,6 +1857,23 @@
             <div class="meta product-code"></div>
             <div class="meta spec"></div>
             <div class="meta supplier"></div>
+            <div class="mobile-stock-summary" aria-label="現在庫">
+              <div class="mobile-stock-label">現在庫</div>
+              <div class="mobile-stock-line">
+                <span class="mobile-stock-amount">${formatQuantity(item.stock)}</span>
+                <span class="mobile-stock-unit">${item.unit}</span>
+              </div>
+            </div>
+            <div class="mobile-value" aria-label="在庫金額">
+              <div class="mobile-value-row">
+                <span class="mobile-value-label">単価</span>
+                <span class="mobile-value-amount">${formatMoney(item.price)}</span>
+              </div>
+              <div class="mobile-value-row">
+                <span class="mobile-value-label">在庫金額</span>
+                <span class="mobile-value-amount">${formatMoney(subtotal)}</span>
+              </div>
+            </div>
             <div class="meta memo"></div>
           </td>
           <td data-label="現在庫">
@@ -1789,7 +1919,7 @@
         tr.querySelector(".supplier").textContent = item.supplier ? "仕入先: " + item.supplier : "仕入先: -";
         tr.querySelector(".memo").textContent = item.memo ? "メモ: " + item.memo : "";
         els.itemsBody.appendChild(tr);
-      }
+      });
 
       updateSummary();
       updateModeUi();
