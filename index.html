@@ -150,6 +150,30 @@
       font-size: 0.9rem;
     }
 
+    .mode-badge {
+      align-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 999px;
+      display: inline-flex;
+      font-size: 0.86rem;
+      font-weight: 800;
+      min-height: 34px;
+      padding: 0 12px;
+      white-space: nowrap;
+    }
+
+    .mode-badge.demo {
+      background: #fff8d8;
+      border-color: #d9bd45;
+      color: #6f5600;
+    }
+
+    .mode-badge.production {
+      background: #e8f7ed;
+      border-color: #8fc6a0;
+      color: #1f6738;
+    }
+
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(4, minmax(150px, 1fr));
@@ -231,6 +255,38 @@
 
     .safety-notice strong {
       color: var(--primary-dark);
+    }
+
+    .demo-prompt {
+      background: #fff8d8;
+      border: 1px solid #d9bd45;
+      border-left: 5px solid #c69a00;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      color: var(--text);
+      display: grid;
+      gap: 10px;
+      margin: 0 auto 14px;
+      max-width: 1380px;
+      padding: 12px;
+    }
+
+    .demo-prompt[hidden] {
+      display: none;
+    }
+
+    .demo-prompt p {
+      margin: 0;
+    }
+
+    .demo-prompt-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .demo-prompt-actions button {
+      min-height: 44px;
     }
 
     .print-controls {
@@ -648,6 +704,11 @@
         width: 100%;
       }
 
+      .mode-badge {
+        justify-content: center;
+        width: 100%;
+      }
+
       h1 {
         font-size: 1.25rem;
       }
@@ -897,9 +958,10 @@
     <header class="header">
       <div class="title-block">
         <h1>潤滑油 在庫管理</h1>
-        <p class="subtitle">Ver 1.1 現場入力検証 / localStorage保存・CSV入出力対応</p>
+        <p class="subtitle">Ver 1.1.1 現場入力検証 / localStorage保存・CSV入出力対応</p>
       </div>
       <div class="header-actions">
+        <span class="mode-badge demo" id="modeBadge" aria-live="polite">🟡 DEMO</span>
         <a class="nav-button" href="products.html">商品マスタを見る</a>
         <a class="nav-button" href="monthly.html">月次集計を見る</a>
         <button type="button" class="nav-button backup-button" id="headerExportButton">バックアップ保存</button>
@@ -938,6 +1000,15 @@
     <section class="safety-notice" aria-label="公開運用の注意">
       <strong>公開運用の注意：</strong>
       このツールはデータをGitHub上に保存しません。実データはCSV/JSONで手元保存し、ブラウザ端末内のlocalStorageは一時保存として扱ってください。CSV未読み込み時は空の状態で起動します。
+    </section>
+
+    <section class="demo-prompt" id="demoPrompt" aria-label="本番CSV読み込み案内" hidden>
+      <p><strong>現在はデモデータです。</strong></p>
+      <p>本番運用を始める場合は、本番CSVを読み込んでください。</p>
+      <div class="demo-prompt-actions">
+        <button type="button" class="btn-primary" id="demoPromptImportButton">CSVを読み込む</button>
+        <button type="button" id="demoPromptDismissButton">あとで</button>
+      </div>
     </section>
 
     <section class="print-controls" aria-label="月末印刷">
@@ -1235,6 +1306,10 @@
       totalOut: document.getElementById("totalOut"),
       lowCount: document.getElementById("lowCount"),
       lastBackupAt: document.getElementById("lastBackupAt"),
+      modeBadge: document.getElementById("modeBadge"),
+      demoPrompt: document.getElementById("demoPrompt"),
+      demoPromptImportButton: document.getElementById("demoPromptImportButton"),
+      demoPromptDismissButton: document.getElementById("demoPromptDismissButton"),
       headerExportButton: document.getElementById("headerExportButton"),
       reportMonth: document.getElementById("reportMonth"),
       reportAdmin: document.getElementById("reportAdmin"),
@@ -1428,22 +1503,59 @@
       try {
         const saved = JSON.parse(localStorage.getItem(UI_SETTINGS_KEY) || "{}");
         return {
-          lastQuantity: fieldQuantityValue(saved.lastQuantity || 1)
+          lastQuantity: fieldQuantityValue(saved.lastQuantity || 1),
+          dataMode: saved.dataMode === "production" ? "production" : saved.dataMode === "demo" ? "demo" : "",
+          demoPromptDismissed: saved.demoPromptDismissed === true
         };
       } catch (error) {
         console.warn("Failed to load UI settings:", error);
-        return { lastQuantity: 1 };
+        return { lastQuantity: 1, dataMode: "", demoPromptDismissed: false };
       }
     }
 
     function saveUiSettings() {
       try {
         localStorage.setItem(UI_SETTINGS_KEY, JSON.stringify({
-          lastQuantity: fieldQuantityValue(uiSettings.lastQuantity)
+          lastQuantity: fieldQuantityValue(uiSettings.lastQuantity),
+          dataMode: uiSettings.dataMode || "",
+          demoPromptDismissed: uiSettings.demoPromptDismissed === true
         }));
       } catch (error) {
         console.warn("Failed to save UI settings:", error);
       }
+    }
+
+    function isDemoItem(item) {
+      return String(item.name || "").includes("[DEMO]") || String(item.memo || "").includes("デモ用");
+    }
+
+    function inferDataMode(list = items) {
+      if (!list.length) return "demo";
+      return list.every(isDemoItem) ? "demo" : "production";
+    }
+
+    function currentDataMode() {
+      if (uiSettings.dataMode === "production" && items.length) return "production";
+      if (uiSettings.dataMode === "demo") return "demo";
+      return inferDataMode();
+    }
+
+    function setDataMode(mode, options = {}) {
+      uiSettings.dataMode = mode === "production" ? "production" : "demo";
+      if (typeof options.dismissPrompt === "boolean") {
+        uiSettings.demoPromptDismissed = options.dismissPrompt;
+      }
+      saveUiSettings();
+      updateModeUi();
+    }
+
+    function updateModeUi() {
+      const mode = currentDataMode();
+      const isProduction = mode === "production";
+      els.modeBadge.textContent = isProduction ? "🟢 本番" : "🟡 DEMO";
+      els.modeBadge.classList.toggle("production", isProduction);
+      els.modeBadge.classList.toggle("demo", !isProduction);
+      els.demoPrompt.hidden = isProduction || uiSettings.demoPromptDismissed === true;
     }
 
     function setFieldQuantity(nextQuantity) {
@@ -1472,6 +1584,7 @@
         render();
         renderPrintReport();
         updateBackupDisplay();
+        setDataMode("demo", { dismissPrompt: false });
         showToast("端末内データを初期化しました");
       } catch (error) {
         alert("端末内データの初期化に失敗しました: " + error.message);
@@ -1486,6 +1599,7 @@
         id: uid()
       }));
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      setDataMode("demo", { dismissPrompt: false });
       resetForm();
       render();
       renderPrintReport();
@@ -1548,6 +1662,8 @@
           items = importedItems;
           localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
           if (importedProducts) localStorage.setItem(PRODUCT_STORAGE_KEY, JSON.stringify(importedProducts));
+          const importedMode = inferDataMode(items);
+          setDataMode(importedMode, { dismissPrompt: importedMode === "production" });
           render();
           renderPrintReport();
           showToast("JSONバックアップを読み込みました");
@@ -1671,6 +1787,7 @@
       }
 
       updateSummary();
+      updateModeUi();
     }
 
     function resetForm() {
@@ -2063,6 +2180,7 @@
         }
 
         saveItems();
+        setDataMode("production", { dismissPrompt: true });
         render();
         renderPrintReport();
       };
@@ -2151,6 +2269,7 @@
             showToast(added + "件追加、重複" + skipped + "件をスキップしました");
           }
           saveItems();
+          setDataMode("production", { dismissPrompt: true });
           render();
           renderPrintReport();
           if (mode === "replace") showToast(imported.length + "件で上書きしました");
@@ -2180,6 +2299,7 @@
         showToast("登録しました");
       }
       saveItems();
+      setDataMode("production", { dismissPrompt: true });
       render();
       resetForm();
     });
@@ -2202,6 +2322,12 @@
     els.sampleButton.addEventListener("click", loadDemoData);
     els.resetStorageButton.addEventListener("click", clearLocalData);
     els.jsonExportButton.addEventListener("click", exportJsonBackup);
+    els.demoPromptImportButton.addEventListener("click", () => els.importInput.click());
+    els.demoPromptDismissButton.addEventListener("click", () => {
+      uiSettings.demoPromptDismissed = true;
+      saveUiSettings();
+      updateModeUi();
+    });
     els.jsonImportInput.addEventListener("change", event => {
       const file = event.target.files && event.target.files[0];
       if (file) importJsonBackup(file);
