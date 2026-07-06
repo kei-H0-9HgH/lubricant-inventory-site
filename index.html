@@ -353,6 +353,10 @@
       padding: 12px;
     }
 
+    .form-panel.is-collapsed .form-body {
+      display: none;
+    }
+
     .field {
       display: grid;
       gap: 5px;
@@ -958,7 +962,7 @@
     <header class="header">
       <div class="title-block">
         <h1>潤滑油 在庫管理</h1>
-        <p class="subtitle">Ver 1.1.1 現場入力検証 / localStorage保存・CSV入出力対応</p>
+        <p class="subtitle">Ver 1.2 現場入力検証 / localStorage保存・CSV入出力対応</p>
       </div>
       <div class="header-actions">
         <span class="mode-badge demo" id="modeBadge" aria-live="polite">🟡 DEMO</span>
@@ -1024,10 +1028,10 @@
     </section>
 
     <section class="workspace">
-      <section class="panel" aria-label="商品入力">
+      <section class="panel form-panel is-collapsed" id="formPanel" aria-label="商品入力">
         <div class="panel-head">
           <h2 id="formTitle">商品登録</h2>
-          <button type="button" id="newButton">新規</button>
+          <button type="button" id="newButton" aria-expanded="false" aria-controls="itemForm">＋ 商品を登録</button>
         </div>
         <form id="itemForm" class="form-body" autocomplete="off">
           <input type="hidden" id="editingId">
@@ -1278,6 +1282,7 @@
     ];
 
     const els = {
+      formPanel: document.getElementById("formPanel"),
       form: document.getElementById("itemForm"),
       formTitle: document.getElementById("formTitle"),
       editingId: document.getElementById("editingId"),
@@ -1790,6 +1795,20 @@
       updateModeUi();
     }
 
+    function setFormOpen(open) {
+      els.formPanel.classList.toggle("is-collapsed", !open);
+      els.newButton.setAttribute("aria-expanded", open ? "true" : "false");
+      els.newButton.textContent = open ? "フォームを閉じる" : "＋ 商品を登録";
+    }
+
+    function openForm() {
+      setFormOpen(true);
+    }
+
+    function closeForm() {
+      setFormOpen(false);
+    }
+
     function resetForm() {
       els.form.reset();
       els.editingId.value = "";
@@ -1848,6 +1867,7 @@
       els.updatedAt.value = item.updatedAt || today();
       els.memo.value = item.memo;
       els.formTitle.textContent = "商品編集";
+      openForm();
       els.name.focus();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -2302,10 +2322,20 @@
       setDataMode("production", { dismissPrompt: true });
       render();
       resetForm();
+      closeForm();
     });
 
     els.clearFormButton.addEventListener("click", resetForm);
-    els.newButton.addEventListener("click", resetForm);
+    els.newButton.addEventListener("click", () => {
+      if (els.formPanel.classList.contains("is-collapsed")) {
+        resetForm();
+        openForm();
+        els.name.focus();
+        return;
+      }
+      resetForm();
+      closeForm();
+    });
     els.supplierSelect.addEventListener("change", toggleSupplierOther);
     [els.stock, els.minStock, els.price, els.monthlyIn, els.monthlyOut].forEach(input => {
       input.addEventListener("input", () => {
