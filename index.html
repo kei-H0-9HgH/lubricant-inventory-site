@@ -1444,6 +1444,7 @@
 
     let items = loadItems();
     let uiSettings = loadUiSettings();
+    let formReturnPosition = null;
 
     function today() {
       return new Date().toISOString().slice(0, 10);
@@ -1664,9 +1665,40 @@
     }
 
     function setFieldQuantity(nextQuantity) {
+      const position = captureWorkPosition();
       uiSettings.lastQuantity = fieldQuantityValue(nextQuantity);
       saveUiSettings();
       render();
+      restoreWorkPosition(position);
+    }
+
+    function captureWorkPosition() {
+      const centerX = Math.max(0, Math.floor(window.innerWidth / 2));
+      const centerY = Math.max(0, Math.min(Math.floor(window.innerHeight / 2), window.innerHeight - 1));
+      const element = document.elementFromPoint(centerX, centerY);
+      const row = element && element.closest ? element.closest("tr[data-id]") : null;
+      return {
+        x: window.scrollX,
+        y: window.scrollY,
+        rowId: row ? row.dataset.id : "",
+        rowTop: row ? row.getBoundingClientRect().top : null
+      };
+    }
+
+    function restoreWorkPosition(position) {
+      if (!position) return;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const row = position.rowId
+            ? Array.from(els.itemsBody.querySelectorAll("tr[data-id]")).find(entry => entry.dataset.id === position.rowId)
+            : null;
+          if (row && typeof position.rowTop === "number") {
+            window.scrollBy(0, row.getBoundingClientRect().top - position.rowTop);
+            return;
+          }
+          window.scrollTo({ left: position.x || 0, top: position.y || 0, behavior: "auto" });
+        });
+      });
     }
 
     function saveItems() {
@@ -1843,6 +1875,7 @@
 
       rows.forEach((item, rowIndex) => {
         const tr = document.createElement("tr");
+        tr.dataset.id = item.id;
         const isLow = item.stock <= item.minStock;
         if (isLow) tr.classList.add("low");
         const subtotal = item.stock * item.price;
@@ -1981,6 +2014,7 @@
     function editItem(id) {
       const item = items.find(entry => entry.id === id);
       if (!item) return;
+      formReturnPosition = captureWorkPosition();
       els.editingId.value = item.id;
       els.productCode.value = item.productCode || "";
       els.name.value = item.name;
@@ -2006,26 +2040,31 @@
       const item = items.find(entry => entry.id === id);
       if (!item) return;
       if (!confirm(`「${item.name || "名称未入力"}」を削除しますか？\n削除前に自動バックアップを作成します。`)) return;
+      const position = captureWorkPosition();
       createAutoBackup("before-delete");
       items = items.filter(entry => entry.id !== id);
       if (els.editingId.value === id) resetForm();
       saveItems();
       render();
+      restoreWorkPosition(position);
       showToast("削除しました");
     }
 
     function updateStock(id, nextStock) {
       const item = items.find(entry => entry.id === id);
       if (!item) return;
+      const position = captureWorkPosition();
       item.stock = integerValue(nextStock);
       item.updatedAt = today();
       saveItems();
       render();
+      restoreWorkPosition(position);
     }
 
     function recordFieldMovement(id, type) {
       const item = items.find(entry => entry.id === id);
       if (!item) return;
+      const position = captureWorkPosition();
       const quantity = fieldQuantityValue(uiSettings.lastQuantity);
       const currentDate = today();
       if (type === "in") {
@@ -2043,6 +2082,7 @@
       item.updatedAt = currentDate;
       saveItems();
       render();
+      restoreWorkPosition(position);
       renderPrintReport();
     }
 
@@ -2448,21 +2488,26 @@
         items.push(item);
         showToast("登録しました");
       }
+      const returnPosition = formReturnPosition || captureWorkPosition();
       saveItems();
       setDataMode("production", { dismissPrompt: true });
       render();
       resetForm();
       closeForm();
+      restoreWorkPosition(returnPosition);
+      formReturnPosition = null;
     });
 
     els.clearFormButton.addEventListener("click", resetForm);
     els.newButton.addEventListener("click", () => {
       if (els.formPanel.classList.contains("is-collapsed")) {
+        formReturnPosition = captureWorkPosition();
         resetForm();
         openForm();
         els.name.focus();
         return;
       }
+      formReturnPosition = null;
       resetForm();
       closeForm();
     });
