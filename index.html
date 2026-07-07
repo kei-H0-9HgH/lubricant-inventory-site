@@ -289,6 +289,15 @@
       min-height: 44px;
     }
 
+    .app-build-version {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+      margin: 14px auto 0;
+      max-width: 1380px;
+      text-align: right;
+    }
+
     .print-controls {
       background: var(--panel);
       border: 1px solid var(--line);
@@ -720,6 +729,11 @@
       .mode-badge {
         justify-content: center;
         width: 100%;
+      }
+
+      .app-build-version {
+        font-size: 0.78rem;
+        text-align: center;
       }
 
       h1 {
@@ -1270,6 +1284,7 @@
         </div>
       </section>
     </section>
+    <div class="app-build-version" id="appVersionLabel" aria-label="アプリバージョン">Ver 1.2.2（Build -）</div>
   </main>
   <section class="print-report" aria-label="月末印刷用在庫帳票">
     <h1 id="printTitle">YYYY年MM月 在庫一覧</h1>
@@ -1439,12 +1454,14 @@
       jsonImportInput: document.getElementById("jsonImportInput"),
       externalCsvImportInput: document.getElementById("externalCsvImportInput"),
       headerTransferButton: document.getElementById("headerTransferButton"),
+      appVersionLabel: document.getElementById("appVersionLabel"),
       toast: document.getElementById("toast")
     };
 
     let items = loadItems();
     let uiSettings = loadUiSettings();
     let formReturnPosition = null;
+    const APP_DISPLAY_VERSION = "1.2.2";
 
     function today() {
       return new Date().toISOString().slice(0, 10);
@@ -1662,6 +1679,12 @@
       els.modeBadge.classList.toggle("production", isProduction);
       els.modeBadge.classList.toggle("demo", !isProduction);
       els.demoPrompt.hidden = isProduction || uiSettings.demoPromptDismissed === true;
+    }
+
+    function updateAppVersionDisplay() {
+      if (!els.appVersionLabel) return;
+      const build = window.LUBRICANT_APP_VERSION || "unknown";
+      els.appVersionLabel.textContent = `Ver ${APP_DISPLAY_VERSION}（Build ${build}）`;
     }
 
     function setFieldQuantity(nextQuantity) {
@@ -2583,6 +2606,7 @@
     render();
     renderPrintReport();
     updateBackupDisplay();
+    updateAppVersionDisplay();
     if (window.__inventoryLoadFailed) {
       showToast("端末内データを読み込めませんでした。空の状態で起動しました。必要に応じて初期化してください。");
     }
